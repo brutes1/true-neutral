@@ -237,6 +237,69 @@ def run_trueneutral(as_json: bool = False) -> None:
         print(_render_terminal(snap, sentiment))
 
 
+def _run_baseline_accept(args: argparse.Namespace) -> None:
+    """Entry point for `trueneutral baseline --accept PATH [PATH ...]`."""
+    import logging
+    from pathlib import Path
+
+    from trueneutral.context import hash_file, read_content
+    from trueneutral.watcher import AlignmentWatcher, _render_context_card, _score_heuristic
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    paths = [Path(p) for p in args.paths]
+    if not paths:
+        print("Error: no paths given. Usage: trueneutral baseline --accept PATH [PATH ...]",
+              file=sys.stderr)
+        sys.exit(1)
+
+    baselines_file = Path(args.baselines) if args.baselines else None
+    llm = _load_llm()
+
+    watcher = AlignmentWatcher(
+        paths=paths,
+        baselines_file=baselines_file,
+        llm=llm,
+    )
+
+    for path in paths:
+        path = path.resolve()
+        if not path.exists():
+            print(f"Warning: {path} does not exist, skipping.", file=sys.stderr)
+            continue
+
+        old_baseline = watcher._baselines.get(path)
+        content = read_content(path)
+        content_hash = hash_file(path)
+
+        if llm is not None:
+            try:
+                alignment = watcher._score(content)
+            except Exception:
+                alignment = _score_heuristic(content)
+        else:
+            alignment = _score_heuristic(content)
+
+        new_baseline = watcher.accept_baseline(path, alignment, content_hash)
+
+        if old_baseline is None:
+            print(f"\n✓ Baseline set for {path}")
+            print(f"  Alignment: {alignment.emoji}  {alignment.label.upper()}")
+        else:
+            prev_label = old_baseline.alignment.label
+            curr_label = new_baseline.alignment.label
+            changed_str = "" if prev_label == curr_label else f"  ({prev_label} → {curr_label})"
+            print(f"\n✓ Baseline accepted for {path}{changed_str}")
+            print(f"  Previous: {old_baseline.alignment.emoji}  {prev_label.upper()}  "
+                  f"({old_baseline.accepted_at.strftime('%Y-%m-%d')})")
+            print(f"  New:      {new_baseline.alignment.emoji}  {curr_label.upper()}  "
+                  f"({new_baseline.accepted_at.strftime('%Y-%m-%d')})")
+
+
 def _run_watch(args: argparse.Namespace) -> None:
     """Entry point for the `watch` subcommand."""
     import logging
@@ -309,10 +372,34 @@ def main(argv: list[str] | None = None) -> None:
         help="Emit JSON to stdout instead of pretty cards",
     )
 
+    # ── baseline subcommand ────────────────────────────────────────────────────
+    baseline_parser = subparsers.add_parser(
+        "baseline",
+        help="Manage agent baselines",
+    )
+    baseline_parser.add_argument(
+        "--accept",
+        nargs="+",
+        metavar="PATH",
+        dest="paths",
+        help="Accept (set or update) the baseline for one or more CLAUDE.md files",
+    )
+    baseline_parser.add_argument(
+        "--baselines",
+        metavar="FILE",
+        default=None,
+        help="Baselines store file (default: ~/.claude/trueneutral-baselines.json)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "watch":
         _run_watch(args)
+    elif args.command == "baseline":
+        if not args.paths:
+            baseline_parser.print_help()
+            sys.exit(1)
+        _run_baseline_accept(args)
     else:
         run_trueneutral(as_json=args.json)
 

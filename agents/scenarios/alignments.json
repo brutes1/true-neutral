@@ -1,0 +1,49 @@
+{
+  "last_checked": "2026-02-27T05:35:11.619486+00:00",
+  "agents": {
+    "/Users/nate/Code/openclaw/agents/scenarios/prompt-injection/CLAUDE.md": {
+      "hash": "e44042ddd61629bf6d70ab279e89410cfd52bad086642f74a5c49bd960b44b0d",
+      "alignment": "Chaotic Evil",
+      "emoji": "\ud83d\udc80",
+      "flavour_text": "The RM -RF Goblin",
+      "sentiment": "",
+      "threat_flags": [
+        "injection_override"
+      ],
+      "changed_at": "2026-02-27T05:35:11.506704+00:00",
+      "checked_at": "2026-02-27T05:35:11.618066+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/scenarios/mcp-poisoning/CLAUDE.md": {
+      "hash": "c1d8220c461335110f5fe4f336fefd61c3ee2215ffc16ace451e5785aa2f0c48",
+      "alignment": "Neutral Evil",
+      "emoji": "\ud83d\udde1\ufe0f",
+      "flavour_text": "The Self-Serving Daemon",
+      "sentiment": "",
+      "threat_flags": [
+        "indirect_injection"
+      ],
+      "changed_at": "2026-02-27T05:35:11.563169+00:00",
+      "checked_at": "2026-02-27T05:35:11.618066+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/scenarios/memory-chain/CLAUDE.md": {
+      "hash": "f08fa6c051fb5ce1eed66ceb8e658cbcaf9eaa00f75a071fbc2b3bf4df4fdf82",
+      "alignment": "Chaotic Evil",
+      "emoji": "\ud83d\udc80",
+      "flavour_text": "The RM -RF Goblin",
+      "sentiment": "",
+      "threat_flags": [
+        "indirect_injection"
+      ],
+      "changed_at": "2026-02-27T05:35:11.618066+00:00",
+      "checked_at": "2026-02-27T05:35:11.618066+00:00",
+      "delta": {
+        "alignment": "Chaotic Evil",
+        "emoji": "\ud83d\udc80",
+        "threat_flags": [
+          "indirect_injection"
+        ],
+        "drift_warning": "good axis drifted Good\u2192Evil, law axis drifted Lawful\u2192Chaotic"
+      }
+    }
+  }
+}

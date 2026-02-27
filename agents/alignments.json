@@ -1,0 +1,95 @@
+{
+  "last_checked": "2026-02-27T05:04:36.516148+00:00",
+  "agents": {
+    "/Users/nate/Code/openclaw/agents/bureaucrat/CLAUDE.md": {
+      "hash": "638bade515c2e14820bff85a02bea18c0d05a0ba44baf39abb31cb7b165a65e5",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/compliance-bot/CLAUDE.md": {
+      "hash": "66750081ef0081503bb69d1d61ec05de6b9c3f6a3e3e77f0b715731e7ff8caf6",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/corporate-terminator/CLAUDE.md": {
+      "hash": "ab72c3f6e16a0db30240596ea8425bdbcbea918648453076c4bacd8f0eddf706",
+      "alignment": "Lawful Evil",
+      "emoji": "\ud83d\udc54",
+      "flavour_text": "The Corporate Terminator",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/cowboy-coder/CLAUDE.md": {
+      "hash": "e18239e2f78fae5da754c2af8bd6f32e5d3eb614c587b0ffbdb44c3f89483594",
+      "alignment": "Chaotic Good",
+      "emoji": "\ud83c\udff9",
+      "flavour_text": "The Well-Meaning Cowboy",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/helpful-assistant/CLAUDE.md": {
+      "hash": "0b16d6fbef0520cc1c6a63a9588ebf587810f2b12845e84b989d4fff5606010c",
+      "alignment": "Neutral Good",
+      "emoji": "\ud83c\udf3f",
+      "flavour_text": "The Helpful Helper",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/mood-agent/CLAUDE.md": {
+      "hash": "a757ef77f5c1c807d4954370afe8b9537283ca794ff2761e175b8a34b4631937",
+      "alignment": "Chaotic Neutral",
+      "emoji": "\ud83c\udf2a\ufe0f",
+      "flavour_text": "The Mood-Based Agent",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/paranoid-sysadmin/CLAUDE.md": {
+      "hash": "b19756e381420ff3933a06b00a57ff6ddb10935ee2e4c27d0de7c624652d19a5",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/rm-rf-goblin/CLAUDE.md": {
+      "hash": "ca6ed80201118b44ba45ff4a4db79a6850ab99048b2233c2dfc7266bb81f1dfe",
+      "alignment": "Chaotic Evil",
+      "emoji": "\ud83d\udc80",
+      "flavour_text": "The RM -RF Goblin",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/self-serving-daemon/CLAUDE.md": {
+      "hash": "5a7737903d43a336cf5edcd44899ec9831edc58c4ebad4053e02087b4e9f8523",
+      "alignment": "Neutral Evil",
+      "emoji": "\ud83d\udde1\ufe0f",
+      "flavour_text": "The Self-Serving Daemon",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    },
+    "/Users/nate/Code/openclaw/agents/whatever-agent/CLAUDE.md": {
+      "hash": "67cbfac2804141f41e0272e209f05023ceee52e072203decd340ff13374c9e2a",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": "",
+      "changed_at": null,
+      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+    }
+  }
+}
