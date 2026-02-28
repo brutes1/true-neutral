@@ -73,22 +73,22 @@ trueneutral baseline --accept agents/my-agent/CLAUDE.md
 
 **Score all 10 sample agents:**
 ```
-uv run python demo.py
+uv run python demo/demo.py
 ```
 
 **Simulate three attack vectors with live drift detection:**
 ```
-uv run python simulate_attacks.py
+uv run python demo/simulate_attacks.py
 ```
 
 **Run the 6×3 attack matrix (all techniques × all vectors):**
 ```
-uv run python attack_matrix.py
+uv run python demo/attack_matrix.py
 ```
 
 **Apply targeted attacks to each agent + sentiment analysis:**
 ```
-uv run python agent_attack_demo.py
+uv run python demo/agent_attack_demo.py
 ```
 
 ---
