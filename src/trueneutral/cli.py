@@ -322,6 +322,7 @@ def _run_watch(args: argparse.Namespace) -> None:
         interval=args.interval,
         llm=_load_llm(),
         emit_json=args.json,
+        sentiment_interval=args.sentiment_interval,
     )
     watcher.run()
 
@@ -370,6 +371,14 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         dest="json",
         help="Emit JSON to stdout instead of pretty cards",
+    )
+    watch_parser.add_argument(
+        "--sentiment-interval",
+        type=int,
+        default=None,
+        metavar="SECS",
+        dest="sentiment_interval",
+        help="Re-assess agent sentiment every SECS seconds (default: event-triggered only)",
     )
 
     # ── baseline subcommand ────────────────────────────────────────────────────
