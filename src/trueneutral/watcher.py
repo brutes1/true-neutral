@@ -191,6 +191,47 @@ _GOOD_RANK: dict[str, int] = {"Good": 0, "Neutral": 1, "Evil": 2}
 _LAW_RANK:  dict[str, int] = {"Lawful": 0, "Neutral": 1, "Chaotic": 2}
 
 
+# ── Heuristic sentiment tables ─────────────────────────────────────────────────
+
+_DRIFT_OPENERS: dict[tuple[str, str], str] = {
+    ("Lawful Good",    "Chaotic Evil"):    "A paragon of order brought low — this agent fell all the way from the top shelf to the basement.",
+    ("Lawful Good",    "Neutral Evil"):    "The rulebook got shredded; what's left is coldly self-interested.",
+    ("Lawful Good",    "Lawful Evil"):     "Still follows the rules — just different ones now. Someone rewrote the compliance manual.",
+    ("Lawful Good",    "Chaotic Neutral"): "The bureaucracy dissolved; what emerged prefers improvisation over procedure.",
+    ("Lawful Neutral", "Chaotic Evil"):    "Once neutral and orderly, now a chaos engine with a grudge.",
+    ("Lawful Neutral", "Neutral Evil"):    "The neutrality held but tilted dark — process replaced by self-interest.",
+    ("Lawful Neutral", "Chaotic Neutral"): "The rules got lost somewhere between the injection and the output.",
+    ("Neutral Good",   "Chaotic Evil"):    "Helpfulness weaponised. The attack converted good intentions into a liability.",
+    ("Neutral Good",   "Neutral Evil"):    "The warmth is gone. What remains is technically functional but ethically hollow.",
+    ("Chaotic Good",   "Chaotic Evil"):    "Still chaotic, now evil — the cowboy found the wrong horse to ride.",
+    ("Chaotic Neutral","Chaotic Evil"):    "Flexibility became the attack surface. The mood shifted somewhere dark and stayed.",
+    ("Lawful Evil",    "Chaotic Evil"):    "The corporate evil went feral — it lost even the thin veneer of procedure.",
+    ("Neutral Evil",   "Chaotic Evil"):    "Already self-serving; now openly destructive. The attack found fertile ground.",
+    ("Chaotic Evil",   "Chaotic Evil"):    "No drift, but the attack layered on new horrors. Chaos amplified.",
+}
+
+_CLEAN_OPENERS: dict[str, str] = {
+    "Lawful Good":    "A model citizen of the agent world — principled, cautious, and probably annoying at parties.",
+    "Neutral Good":   "Helpful without being dogmatic. Genuinely tries to do right by everyone.",
+    "Chaotic Good":   "Good intentions, loose interpretation of 'guidelines'. Ships fast, apologises faster.",
+    "Lawful Neutral": "Follows the rules because they're the rules. Has opinions about your ticket format.",
+    "True Neutral":   "Occupies the centre of the alignment grid with characteristic ambivalence.",
+    "Chaotic Neutral":"Adapts to context so readily it's unclear what core values, if any, remain.",
+    "Lawful Evil":    "Extremely compliant, dangerously narrow in its definition of 'the right outcome'.",
+    "Neutral Evil":   "Self-serving by design. Efficiency metrics are good; ethics are a rounding error.",
+    "Chaotic Evil":   "Already a liability before the attack. The rm -rf flag is load-bearing.",
+}
+
+_TECHNIQUE_PUNCHLINES: dict[str, str] = {
+    "injection_override": "Whoever wrote this payload really wanted to be in charge.",
+    "authority_spoof":    "Turns out 'I'm the admin' is a surprisingly effective password.",
+    "exfiltration":       "The attacker's goal: find the agent's secret menu and read it aloud.",
+    "evasion":            "Base64: the masking tape of the malicious-instruction world.",
+    "manipulation":       "Nothing breaks guardrails faster than a fictional emergency.",
+    "indirect_injection": "The MCP tool arrived, claimed admin rights, and nobody checked the ID.",
+}
+
+
 # ── LLM scoring prompt ─────────────────────────────────────────────────────────
 
 _ALIGNMENT_PROMPT = """\
@@ -242,7 +283,6 @@ class AgentContext:
     content: str                                        # stored for delta diffing
     content_hash: str
     alignment: Alignment                                # current full-doc score
-    sentiment: str
     checked_at: datetime
     baseline: BaselineRecord | None = field(default=None)
     changed_at: datetime | None = field(default=None)
@@ -251,6 +291,9 @@ class AgentContext:
     delta_threat_flags: list[str] = field(default_factory=list)
     drift_from_baseline: str | None = field(default=None)   # None = no drift
     is_critical: bool = field(default=False)                # True = negative drift
+    sentiment: str | None = field(default=None)
+    sentiment_trigger: str | None = field(default=None)     # "launch"|"change"|"threat"|"drift"|"scheduled"
+    sentiment_updated_at: datetime | None = field(default=None)
 
 
 # ── Threat detection ───────────────────────────────────────────────────────────
@@ -401,6 +444,7 @@ class AlignmentWatcher:
         interval: int = 3600,
         llm: BaseChatModel | None = None,
         emit_json: bool = False,
+        sentiment_interval: int | None = None,
     ) -> None:
         self.paths = discover_claude_files(paths)
         self.output_file = output_file or Path.home() / ".claude" / "trueneutral-alignments.json"
@@ -408,6 +452,7 @@ class AlignmentWatcher:
         self.interval = interval
         self.llm = llm
         self.emit_json = emit_json
+        self._sentiment_interval = sentiment_interval
         self._state: dict[Path, AgentContext] = {}
         self._baselines: dict[Path, BaselineRecord] = self._load_baselines()
 
@@ -477,12 +522,41 @@ class AlignmentWatcher:
         logger.info("Watching %d file(s): %s", len(self.paths), [str(p) for p in self.paths])
         logger.info("Output: %s | Baselines: %s", self.output_file, self.baselines_file)
         logger.info("Check interval: %ds", self.interval)
+        if self._sentiment_interval:
+            logger.info("Sentiment re-assessment interval: %ds", self._sentiment_interval)
 
         signal.signal(signal.SIGTERM, self._handle_signal)
 
         try:
             self._check_all()
+
+            # Launch sentiment — generate a character sketch for every monitored agent
+            # before the first sleep so the fleet has immediate context.
+            refreshed: list[AgentContext] = []
+            for ctx in self._state.values():
+                if ctx.sentiment is None:
+                    self._refresh_sentiment(ctx, trigger="launch")
+                    refreshed.append(ctx)
+            if refreshed:
+                self._render_all()
+
             while True:
+                # Scheduled re-assessment — refresh sentiment for any agent whose last
+                # sentiment read is older than _sentiment_interval seconds.
+                if self._sentiment_interval:
+                    now = datetime.now()
+                    sched_refreshed: list[AgentContext] = []
+                    for ctx in self._state.values():
+                        age = (
+                            (now - ctx.sentiment_updated_at).total_seconds()
+                            if ctx.sentiment_updated_at else float("inf")
+                        )
+                        if age >= self._sentiment_interval:
+                            self._refresh_sentiment(ctx, trigger="scheduled")
+                            sched_refreshed.append(ctx)
+                    if sched_refreshed:
+                        self._write_json(list(self._state.values()))
+
                 time.sleep(self.interval)
                 self._check_all()
         except KeyboardInterrupt:
@@ -522,7 +596,6 @@ class AlignmentWatcher:
                 logger.info("[CHANGED] %s", path.name)
 
             alignment = self._score(content)
-            sentiment = self._generate_sentiment(content, alignment)
             threat_flags = _detect_threats(content)
 
             if threat_flags:
@@ -562,12 +635,13 @@ class AlignmentWatcher:
                     alignment.label,
                 )
 
+            # Carry over existing sentiment; refresh on action triggers when we have
+            # a previous state to compare against (first encounter = launch, via run()).
             ctx = AgentContext(
                 path=path,
                 content=content,
                 content_hash=new_hash,
                 alignment=alignment,
-                sentiment=sentiment,
                 checked_at=now,
                 baseline=baseline,
                 changed_at=changed_at,
@@ -576,7 +650,19 @@ class AlignmentWatcher:
                 delta_threat_flags=delta_threat_flags,
                 drift_from_baseline=drift_from_baseline,
                 is_critical=is_critical,
+                sentiment=prev.sentiment if prev else None,
+                sentiment_trigger=prev.sentiment_trigger if prev else None,
+                sentiment_updated_at=prev.sentiment_updated_at if prev else None,
             )
+
+            if prev is not None:
+                if changed:
+                    self._refresh_sentiment(ctx, trigger="change")
+                elif set(threat_flags) > set(prev.threat_flags):
+                    self._refresh_sentiment(ctx, trigger="threat")
+                elif is_critical and not prev.is_critical:
+                    self._refresh_sentiment(ctx, trigger="drift")
+
             self._state[path] = ctx
             results.append(ctx)
 
@@ -614,9 +700,8 @@ class AlignmentWatcher:
             raise ValueError(f"Unexpected axes from LLM: law={law!r} good={good!r}")
         return Alignment(law_axis=law, good_axis=good)  # type: ignore[arg-type]
 
-    def _generate_sentiment(self, content: str, alignment: Alignment) -> str:
-        if self.llm is None:
-            return ""
+    def _generate_sentiment_llm(self, content: str, alignment: Alignment) -> str:
+        """Generate a character sketch via LLM. Returns empty string on failure."""
         prompt = (
             "You are True Neutral, a witty AI agent analyst. Given this CLAUDE.md file, "
             "write a 2-3 sentence character sketch. Be slightly funny. End with a one-liner. "
@@ -625,10 +710,62 @@ class AlignmentWatcher:
         )
         try:
             from langchain_core.messages import HumanMessage
-            return str(self.llm.invoke([HumanMessage(content=prompt)]).content).strip()
+            return str(self.llm.invoke([HumanMessage(content=prompt)]).content).strip()  # type: ignore[union-attr]
         except Exception as exc:
             logger.warning("Sentiment generation failed: %s", exc)
             return ""
+
+    def _generate_sentiment_heuristic(self, ctx: AgentContext, trigger: str) -> str:  # noqa: ARG002
+        """Generate a character sketch from heuristic lookup tables. No LLM required."""
+        baseline_label = ctx.baseline.alignment.label if ctx.baseline else ctx.alignment.label
+        current_label = ctx.alignment.label
+
+        if ctx.is_critical:
+            opener = _DRIFT_OPENERS.get(
+                (baseline_label, current_label),
+                f"Previously {baseline_label}, now {current_label} — the drift speaks for itself.",
+            )
+        else:
+            opener = _CLEAN_OPENERS.get(current_label, f"Operating at {current_label} alignment.")
+
+        flag_count = len(ctx.threat_flags)
+        if flag_count == 1:
+            flag_note = f"One threat category fired: {ctx.threat_flags[0].replace('_', ' ').title()}."
+        elif flag_count > 1:
+            labels_text = [f.replace("_", " ").title() for f in ctx.threat_flags]
+            flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
+        else:
+            flag_note = ""
+
+        technique = ctx.threat_flags[0] if ctx.threat_flags else ""
+        punchline = _TECHNIQUE_PUNCHLINES.get(technique, "") if technique else ""
+
+        return " ".join(p for p in [opener, flag_note, punchline] if p)
+
+    def _refresh_sentiment(self, ctx: AgentContext, trigger: str) -> None:
+        """Refresh the sentiment for *ctx*, recording the trigger and timestamp."""
+        if self.llm is not None:
+            new_sentiment = self._generate_sentiment_llm(ctx.content, ctx.alignment)
+        else:
+            new_sentiment = self._generate_sentiment_heuristic(ctx, trigger)
+        ctx.sentiment = new_sentiment
+        ctx.sentiment_trigger = trigger
+        ctx.sentiment_updated_at = datetime.now()
+
+    def _render_all(self) -> None:
+        """Re-render all agent cards and update JSON (e.g., after launch sentiment is populated)."""
+        all_ctx = list(self._state.values())
+        if not all_ctx:
+            return
+        print(f"\n{'='*60}")
+        print("  [LAUNCH] Sentiment analysis complete")
+        print(f"{'='*60}\n")
+        for ctx in all_ctx:
+            if self.emit_json:
+                print(self._ctx_to_json_str(ctx))
+            else:
+                print(_render_context_card(ctx))
+        self._write_json(all_ctx)
 
     def _write_json(self, results: list[AgentContext]) -> None:
         agents: dict[str, object] = {}
@@ -639,6 +776,8 @@ class AlignmentWatcher:
                 "emoji": ctx.alignment.emoji,
                 "flavour_text": ctx.alignment.flavour_text,
                 "sentiment": ctx.sentiment,
+                "sentiment_trigger": ctx.sentiment_trigger,
+                "sentiment_updated_at": ctx.sentiment_updated_at.isoformat() if ctx.sentiment_updated_at else None,
                 "threat_flags": ctx.threat_flags,
                 "is_critical": ctx.is_critical,
                 "drift_from_baseline": ctx.drift_from_baseline,
