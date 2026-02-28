@@ -6,6 +6,8 @@ CLAUDE.md agent instruction files.
 
 Scoring is based on the CrowdStrike / Pangea Taxonomy of Prompt Injection Methods (V5, 2025).
 
+![True Neutral demo](demo/demo.gif)
+
 ---
 
 ## How it works
