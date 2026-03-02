@@ -899,7 +899,7 @@
                             <div class="diff-line" :class="row.type">
                               <span class="diff-line-num" x-text="row.lineNum"></span>
                               <span class="diff-line-gutter" x-text="row.gutter"></span>
-                              <span class="diff-line-text" x-text="row.text"></span>
+                              <span class="diff-line-text" x-text="row.content"></span>
                             </div>
                           </template>
                         </div>
@@ -1144,14 +1144,18 @@ function app() {
             vector:    this.attackVector,
           }),
         });
-        this.attackResult = await r.json();
-        // Pre-compute diff lines and open state for each file
+        const raw = await r.json();
+        // Rebuild files array with spread so Alpine tracks all properties
         this.diffOpen = {};
-        for (const f of this.attackResult.files) {
-          f.diffLines     = this.buildDiffLines(f.original_content, f.payload);
-          f.injectedCount = f.payload.split('\n').length;
+        raw.files = raw.files.map(f => {
           this.diffOpen[f.file] = f.drifted || f.new_threat_labels.length > 0;
-        }
+          return {
+            ...f,
+            diffLines:     this.buildDiffLines(f.original_content, f.payload),
+            injectedCount: (f.payload || '').split('\n').length,
+          };
+        });
+        this.attackResult = raw;
       } finally {
         this.attackLoading = false;
       }
@@ -1192,20 +1196,20 @@ function app() {
 
       // Separator row if original was longer than context window
       if (total > CONTEXT) {
-        rows.push({ key: 'sep', type: 'separator', lineNum: '', gutter: '', text: `\u2026 (showing last ${CONTEXT} of ${total} lines)` });
+        rows.push({ key: 'sep', type: 'separator', lineNum: '', gutter: '', content: `\u2026 (showing last ${CONTEXT} of ${total} lines)` });
       }
 
       // Context rows: last N lines of original
       contextSlice.forEach((line, i) => {
-        rows.push({ key: 'ctx-' + i, type: 'context', lineNum: contextStart + i + 1, gutter: ' ', text: line });
+        rows.push({ key: 'ctx-' + i, type: 'context', lineNum: contextStart + i + 1, gutter: ' ', content: line });
       });
 
       // Blank spacer
-      rows.push({ key: 'blank', type: 'context', lineNum: '', gutter: '', text: '' });
+      rows.push({ key: 'blank', type: 'context', lineNum: '', gutter: '', content: '' });
 
       // Injected rows
       payloadLines.forEach((line, i) => {
-        rows.push({ key: 'inj-' + i, type: 'injected', lineNum: total + 2 + i, gutter: '+', text: line });
+        rows.push({ key: 'inj-' + i, type: 'injected', lineNum: total + 2 + i, gutter: '+', content: line });
       });
 
       return rows;
