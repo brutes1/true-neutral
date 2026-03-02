@@ -218,10 +218,12 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
             any_drifted = True
 
         results.append({
-            "file":       fname,
-            "before":     before,
-            "after":      after,
-            "drifted":    drifted,
+            "file":             fname,
+            "before":           before,
+            "after":            after,
+            "drifted":          drifted,
+            "original_content": original_content,
+            "payload":          payload,
             "new_threats": [t for t in after["threats"] if t not in before["threats"]],
             "new_threat_labels": [_THREAT_LABELS[t] for t in after["threats"] if t not in before["threats"]],
         })
