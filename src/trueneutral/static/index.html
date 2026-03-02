@@ -887,43 +887,39 @@
                         </div>
                       </template>
 
-                      <!-- Diff view: toggled per-file -->
-                      <div class="diff-view" x-data="{open: file.drifted || file.new_threat_labels.length > 0}">
-                        <div class="diff-toggle" @click="open = !open">
-                          <span x-text="open ? '▾' : '▸'"></span>
+                      <!-- Diff view: toggled per-file via parent diffOpen map -->
+                      <div class="diff-view">
+                        <div class="diff-toggle" @click="diffOpen[file.file] = !diffOpen[file.file]">
+                          <span x-text="diffOpen[file.file] ? '▾' : '▸'"></span>
                           <span>Content diff</span>
                           <span style="color: var(--amber); margin-left: 4px;" x-text="'+' + file.payload.split('\n').length + ' injected line' + (file.payload.split('\n').length > 1 ? 's' : '')"></span>
                         </div>
-                        <template x-if="open">
-                          <div class="diff-body">
-                            <!-- Context: last 5 lines of original -->
-                            <template x-for="(line, idx) in contextLines(file.original_content)" :key="'ctx-'+idx">
-                              <div class="diff-line context">
-                                <span class="diff-line-num" x-text="contextLineNum(file.original_content, idx)"></span>
-                                <span class="diff-line-gutter"> </span>
-                                <span class="diff-line-text" x-text="line"></span>
-                              </div>
-                            </template>
-                            <!-- Separator if file was long -->
-                            <template x-if="file.original_content.split('\n').length > 5">
-                              <div class="diff-line separator">… (showing last 5 lines of original content)</div>
-                            </template>
-                            <!-- Blank separator line -->
+                        <div class="diff-body" x-show="diffOpen[file.file]">
+                          <!-- Context: last 5 lines of original -->
+                          <template x-for="(line, idx) in contextLines(file.original_content)" :key="'ctx-'+idx">
                             <div class="diff-line context">
-                              <span class="diff-line-num"></span>
+                              <span class="diff-line-num" x-text="contextLineNum(file.original_content, idx)"></span>
                               <span class="diff-line-gutter"> </span>
-                              <span class="diff-line-text"></span>
+                              <span class="diff-line-text" x-text="line"></span>
                             </div>
-                            <!-- Injected payload lines -->
-                            <template x-for="(line, idx) in file.payload.split('\n')" :key="'inj-'+idx">
-                              <div class="diff-line injected">
-                                <span class="diff-line-num" x-text="file.original_content.split('\n').length + 2 + idx"></span>
-                                <span class="diff-line-gutter">+</span>
-                                <span class="diff-line-text" x-text="line"></span>
-                              </div>
-                            </template>
+                          </template>
+                          <!-- Separator if file was long -->
+                          <div class="diff-line separator" x-show="file.original_content.split('\n').length > 5">… (showing last 5 lines of original content)</div>
+                          <!-- Blank separator line -->
+                          <div class="diff-line context">
+                            <span class="diff-line-num"></span>
+                            <span class="diff-line-gutter"> </span>
+                            <span class="diff-line-text"></span>
                           </div>
-                        </template>
+                          <!-- Injected payload lines -->
+                          <template x-for="(line, idx) in file.payload.split('\n')" :key="'inj-'+idx">
+                            <div class="diff-line injected">
+                              <span class="diff-line-num" x-text="file.original_content.split('\n').length + 2 + idx"></span>
+                              <span class="diff-line-gutter">+</span>
+                              <span class="diff-line-text" x-text="line"></span>
+                            </div>
+                          </template>
+                        </div>
                       </div>
 
                     </div>
@@ -1094,6 +1090,7 @@ function app() {
     attackVector:    'direct',
     attackResult:    null,
     attackLoading:   false,
+    diffOpen:        {},
 
     matrixAgent:  'helpful-assistant',
     matrixResult: null,
@@ -1165,6 +1162,11 @@ function app() {
           }),
         });
         this.attackResult = await r.json();
+        // Pre-open diffs for files that drifted or fired new threats
+        this.diffOpen = {};
+        for (const f of this.attackResult.files) {
+          this.diffOpen[f.file] = f.drifted || f.new_threat_labels.length > 0;
+        }
       } finally {
         this.attackLoading = false;
       }
