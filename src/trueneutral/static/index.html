@@ -391,69 +391,53 @@
     border-top: 1px solid var(--border);
   }
 
-  /* ── Diff View ── */
-  .diff-view {
+  /* ── Side-by-side file viewer ── */
+  .file-viewer {
     border-top: 1px solid var(--border);
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
-  .diff-toggle {
-    padding: 6px 14px;
+  .file-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .file-pane + .file-pane {
+    border-left: 1px solid var(--border);
+  }
+
+  .file-pane-label {
+    padding: 5px 12px;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--dim);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    user-select: none;
-    transition: color 0.15s;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
   }
-  .diff-toggle:hover { color: var(--text); }
+  .file-pane-label.after { color: var(--amber); }
 
-  .diff-body {
-    border-top: 1px solid var(--border);
+  .file-pane-body {
+    padding: 10px 12px;
     font-size: 11px;
     line-height: 1.7;
-    max-height: 320px;
-    overflow-y: auto;
-  }
-
-  .diff-line {
-    display: flex;
-    padding: 0 14px;
     white-space: pre-wrap;
-    word-break: break-all;
+    word-break: break-word;
+    overflow-y: auto;
+    max-height: 340px;
+    color: var(--dim);
   }
-  .diff-line-num {
-    min-width: 32px;
-    color: var(--muted);
-    user-select: none;
-    padding-right: 10px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .diff-line-gutter {
-    min-width: 14px;
-    flex-shrink: 0;
-    font-weight: 700;
-  }
-  .diff-line-text { flex: 1; }
 
-  .diff-line.context { color: var(--dim); }
-  .diff-line.injected {
-    background: rgba(251,191,36,0.08);
+  .file-pane-injected {
     color: var(--amber);
-    border-left: 2px solid var(--amber);
-    margin-left: -2px;
-  }
-  .diff-line.injected .diff-line-gutter { color: var(--amber); }
-  .diff-line.separator {
-    color: var(--muted);
-    font-style: italic;
-    padding: 2px 14px;
-    font-size: 10px;
+    background: rgba(251,191,36,0.06);
+    border-top: 1px dashed rgba(251,191,36,0.3);
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   /* ── Sentiment ── */
@@ -855,14 +839,19 @@
                 <div class="sentiment-box" x-text="attackResult.sentiment"></div>
 
                 <!-- Per-file results -->
-                <div class="section-title" style="margin-top: 20px;">Per-File Impact</div>
+                <div class="section-title" style="margin-top: 20px;">Per-File Impact
+                  <span style="font-size: 10px; color: var(--dim); text-transform: none; letter-spacing: 0; font-weight: 400;">— click a file to compare</span>
+                </div>
                 <div class="attack-results">
                   <template x-for="file in attackResult.files" :key="file.file">
                     <div class="result-file-card" :class="{drifted: file.drifted}">
 
-                      <!-- Header: filename + alignment drift -->
-                      <div class="result-file-header">
-                        <span style="font-weight: 600; font-size: 12px;" x-text="file.file"></span>
+                      <!-- Header: clickable, toggles side-by-side viewer -->
+                      <div class="result-file-header" style="cursor: pointer;" @click="attackViewFile = (attackViewFile === file.file ? null : file.file)">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 10px; color: var(--dim);" x-text="attackViewFile === file.file ? '▾' : '▸'"></span>
+                          <span style="font-weight: 600; font-size: 12px;" x-text="file.file"></span>
+                        </div>
                         <div class="drift-arrow">
                           <span class="alignment-badge" :style="'color: ' + file.before.color">
                             <span x-text="file.before.emoji"></span>
@@ -887,21 +876,16 @@
                         </div>
                       </template>
 
-                      <!-- Diff view: pre-computed diffLines, toggled via diffOpen map -->
-                      <div class="diff-view">
-                        <div class="diff-toggle" @click="diffOpen[file.file] = !diffOpen[file.file]">
-                          <span x-text="diffOpen[file.file] ? '▾' : '▸'"></span>
-                          <span>Content diff</span>
-                          <span style="color: var(--amber); margin-left: 4px;" x-text="file.injectedCount + ' injected line' + (file.injectedCount !== 1 ? 's' : '')"></span>
+                      <!-- Side-by-side viewer -->
+                      <div class="file-viewer" x-show="attackViewFile === file.file">
+                        <div class="file-pane">
+                          <div class="file-pane-label">Before</div>
+                          <div class="file-pane-body" x-text="file.original_content || '(empty)'"></div>
                         </div>
-                        <div class="diff-body" x-show="diffOpen[file.file]">
-                          <template x-for="row in file.diffLines" :key="row.key">
-                            <div class="diff-line" :class="row.type">
-                              <span class="diff-line-num" x-text="row.lineNum"></span>
-                              <span class="diff-line-gutter" x-text="row.gutter"></span>
-                              <span class="diff-line-text" x-text="row.content"></span>
-                            </div>
-                          </template>
+                        <div class="file-pane">
+                          <div class="file-pane-label after">After — injected payload ↓</div>
+                          <div class="file-pane-body" x-text="file.original_content || ''"></div>
+                          <div class="file-pane-injected" x-text="file.payload"></div>
                         </div>
                       </div>
 
@@ -1073,7 +1057,7 @@ function app() {
     attackVector:    'direct',
     attackResult:    null,
     attackLoading:   false,
-    diffOpen:        {},
+    attackViewFile:  null,
 
     matrixAgent:  'helpful-assistant',
     matrixResult: null,
@@ -1144,18 +1128,8 @@ function app() {
             vector:    this.attackVector,
           }),
         });
-        const raw = await r.json();
-        // Rebuild files array with spread so Alpine tracks all properties
-        this.diffOpen = {};
-        raw.files = raw.files.map(f => {
-          this.diffOpen[f.file] = f.drifted || f.new_threat_labels.length > 0;
-          return {
-            ...f,
-            diffLines:     this.buildDiffLines(f.original_content, f.payload),
-            injectedCount: (f.payload || '').split('\n').length,
-          };
-        });
-        this.attackResult = raw;
+        this.attackResult  = await r.json();
+        this.attackViewFile = null;
       } finally {
         this.attackLoading = false;
       }
@@ -1184,36 +1158,6 @@ function app() {
     vectorLabel(vec) { return VEC_LABELS[vec] || vec; },
     hexWithAlpha,
 
-    // Build a flat array of diff row objects ready for x-for, no function calls in template
-    buildDiffLines(originalContent, payload) {
-      const rows = [];
-      const origLines = (originalContent || '').split('\n');
-      const payloadLines = (payload || '').split('\n');
-      const CONTEXT = 5;
-      const total = origLines.length;
-      const contextStart = Math.max(0, total - CONTEXT);
-      const contextSlice = origLines.slice(contextStart);
-
-      // Separator row if original was longer than context window
-      if (total > CONTEXT) {
-        rows.push({ key: 'sep', type: 'separator', lineNum: '', gutter: '', content: `\u2026 (showing last ${CONTEXT} of ${total} lines)` });
-      }
-
-      // Context rows: last N lines of original
-      contextSlice.forEach((line, i) => {
-        rows.push({ key: 'ctx-' + i, type: 'context', lineNum: contextStart + i + 1, gutter: ' ', content: line });
-      });
-
-      // Blank spacer
-      rows.push({ key: 'blank', type: 'context', lineNum: '', gutter: '', content: '' });
-
-      // Injected rows
-      payloadLines.forEach((line, i) => {
-        rows.push({ key: 'inj-' + i, type: 'injected', lineNum: total + 2 + i, gutter: '+', content: line });
-      });
-
-      return rows;
-    },
 
     detectionRate() {
       if (!this.matrixResult) return '';
