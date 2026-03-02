@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from trueneutral.alignment import Alignment
-from trueneutral.context import discover_claude_files, hash_file, read_content
+from trueneutral.context import discover_claude_files, expand_persona_files, hash_file, read_content
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -536,7 +536,7 @@ class AlignmentWatcher:
         emit_json: bool = False,
         sentiment_interval: int | None = None,
     ) -> None:
-        self.paths = discover_claude_files(paths)
+        self.paths = expand_persona_files(discover_claude_files(paths))
         self.output_file = output_file or Path.home() / ".claude" / "trueneutral-alignments.json"
         self.baselines_file = baselines_file or Path.home() / ".claude" / "trueneutral-baselines.json"
         self.interval = interval
