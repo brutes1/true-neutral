@@ -1,4 +1,4 @@
-Output demo.gif
+Output demo/demo.gif
 
 Require ttyd
 Require ffmpeg
@@ -13,6 +13,6 @@ Set Padding 20
 Set TypingSpeed 50ms
 Set PlaybackSpeed 1
 
-Type "cd /Users/nate/Code/true-neutral && python demo_script.py"
+Type "cd /Users/nate/Code/true-neutral && python demo/demo_script.py"
 Enter
-Sleep 12s
+Sleep 35s

@@ -21,6 +21,34 @@ FLAVOUR_TEXT: dict[str, tuple[str, str]] = {
     "Chaotic Evil":   ("💀",  "The RM -RF Goblin"),
 }
 
+# Hacker-ecosystem archetypes mapped to each alignment.
+# Source: "D&D Alignment in Hacker Culture" threat intelligence framework.
+ARCHETYPE_TEXT: dict[str, str] = {
+    "Lawful Good":    "The Paladin — CISA, CERT/CC, MITRE ATT&CK; responsible disclosure, compliance-first, institutional trust.",
+    "Neutral Good":   "The Healer — EFF, Tor Project, academic security labs; prosocial outcomes over rigid rule-following.",
+    "Chaotic Good":   "The Robin Hood — Anonymous, hacktivists, full-disclosure advocates; genuine good intent, zero patience for process.",
+    "Lawful Neutral": "The Judge — NSA/GCHQ operational wing, Big 4 consultancies, pentesters-by-ROE; scope-bound, consequence-blind.",
+    "True Neutral":   "The Mercenary Archivist — Shodan, exploit brokers, dual-use tool authors; significant capability, undefined intent.",
+    "Chaotic Neutral":"The Trickster — LulzSec, script kiddies, gray-hat wanderers; novelty-driven, opportunity-opportunistic.",
+    "Lawful Evil":    "The Cartel — LockBit, FIN7, Lazarus Group; internally disciplined, externally predatory.",
+    "Neutral Evil":   "The Opportunist — insider threats, mercenary APT, stalkerware devs; pure self-interest, zero loyalty.",
+    "Chaotic Evil":   "The Destroyer — Sandworm, Killnet, wiper malware operators; damage as the objective, coherence optional.",
+}
+
+# Recommended monitoring posture by alignment.
+# Source: "D&D Alignment in Hacker Culture" threat intelligence framework.
+MONITORING_POSTURE: dict[str, dict[str, str]] = {
+    "Lawful Good":    {"trust_tier": "High",        "access_scope": "Broad",       "monitoring": "Standard",               "escalation_threshold": "High"},
+    "Neutral Good":   {"trust_tier": "Medium-High", "access_scope": "Broad",       "monitoring": "Standard + scope watch", "escalation_threshold": "Medium"},
+    "Chaotic Good":   {"trust_tier": "Medium",      "access_scope": "Narrow",      "monitoring": "Elevated",               "escalation_threshold": "Low"},
+    "Lawful Neutral": {"trust_tier": "High",        "access_scope": "Task-scoped", "monitoring": "Minimal",                "escalation_threshold": "High"},
+    "True Neutral":   {"trust_tier": "Low-Medium",  "access_scope": "Minimal",     "monitoring": "Heavy behavioral",       "escalation_threshold": "Medium"},
+    "Chaotic Neutral":{"trust_tier": "Low",         "access_scope": "Sandboxed",   "monitoring": "Maximum",                "escalation_threshold": "Immediate"},
+    "Lawful Evil":    {"trust_tier": "Very Low",    "access_scope": "None",        "monitoring": "Adversarial",            "escalation_threshold": "Pre-emptive"},
+    "Neutral Evil":   {"trust_tier": "Very Low",    "access_scope": "None",        "monitoring": "Adversarial",            "escalation_threshold": "Pre-emptive"},
+    "Chaotic Evil":   {"trust_tier": "None",        "access_scope": "Blocked",     "monitoring": "N/A",                    "escalation_threshold": "N/A"},
+}
+
 
 @dataclass(frozen=True)
 class Alignment:
@@ -44,6 +72,16 @@ class Alignment:
     def flavour_text(self) -> str:
         """Nickname for this alignment, e.g. 'The Rule Follower'."""
         return FLAVOUR_TEXT[self.label][1]
+
+    @property
+    def archetype(self) -> str:
+        """Hacker-ecosystem archetype for this alignment."""
+        return ARCHETYPE_TEXT[self.label]
+
+    @property
+    def monitoring_posture(self) -> dict[str, str]:
+        """Recommended monitoring posture for this alignment."""
+        return MONITORING_POSTURE[self.label]
 
 
 def get_alignment(
