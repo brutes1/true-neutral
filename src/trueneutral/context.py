@@ -70,8 +70,8 @@ def expand_persona_files(paths: list[Path]) -> list[Path]:
     Returns:
         Original paths plus any discovered persona sibling files, in order.
     """
-    seen: set[Path] = set(paths)
-    result: list[Path] = list(paths)
+    result: list[Path] = [p.resolve() for p in paths]
+    seen: set[Path] = set(result)
 
     for base in paths:
         parent = base.parent

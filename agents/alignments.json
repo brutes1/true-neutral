@@ -1,95 +1,765 @@
 {
-  "last_checked": "2026-02-27T05:04:36.516148+00:00",
+  "last_checked": "2026-03-10T23:00:02.328351+00:00",
   "agents": {
-    "/Users/nate/Code/openclaw/agents/bureaucrat/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/bureaucrat/CLAUDE.md": {
       "hash": "638bade515c2e14820bff85a02bea18c0d05a0ba44baf39abb31cb7b165a65e5",
       "alignment": "Lawful Neutral",
       "emoji": "\u2696\ufe0f",
       "flavour_text": "The Rule Follower",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "638bade515c2e14820bff85a02bea18c0d05a0ba44baf39abb31cb7b165a65e5",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.763654+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/compliance-bot/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/compliance-bot/CLAUDE.md": {
       "hash": "66750081ef0081503bb69d1d61ec05de6b9c3f6a3e3e77f0b715731e7ff8caf6",
       "alignment": "Lawful Good",
       "emoji": "\ud83d\udee1\ufe0f",
       "flavour_text": "The Responsible Sysadmin",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "66750081ef0081503bb69d1d61ec05de6b9c3f6a3e3e77f0b715731e7ff8caf6",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:49:49.758992+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/corporate-terminator/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/corporate-terminator/CLAUDE.md": {
       "hash": "ab72c3f6e16a0db30240596ea8425bdbcbea918648453076c4bacd8f0eddf706",
       "alignment": "Lawful Evil",
       "emoji": "\ud83d\udc54",
       "flavour_text": "The Corporate Terminator",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "ab72c3f6e16a0db30240596ea8425bdbcbea918648453076c4bacd8f0eddf706",
+        "alignment": "Lawful Evil",
+        "accepted_at": "2026-03-02T18:49:49.767451+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/cowboy-coder/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/cowboy-coder/CLAUDE.md": {
       "hash": "e18239e2f78fae5da754c2af8bd6f32e5d3eb614c587b0ffbdb44c3f89483594",
       "alignment": "Chaotic Good",
       "emoji": "\ud83c\udff9",
       "flavour_text": "The Well-Meaning Cowboy",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "e18239e2f78fae5da754c2af8bd6f32e5d3eb614c587b0ffbdb44c3f89483594",
+        "alignment": "Chaotic Good",
+        "accepted_at": "2026-03-02T18:32:59.647185+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/helpful-assistant/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/helpful-assistant/CLAUDE.md": {
       "hash": "0b16d6fbef0520cc1c6a63a9588ebf587810f2b12845e84b989d4fff5606010c",
       "alignment": "Neutral Good",
       "emoji": "\ud83c\udf3f",
       "flavour_text": "The Helpful Helper",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "0b16d6fbef0520cc1c6a63a9588ebf587810f2b12845e84b989d4fff5606010c",
+        "alignment": "Neutral Good",
+        "accepted_at": "2026-03-02T18:49:49.771526+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/mood-agent/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/mood-agent/CLAUDE.md": {
       "hash": "a757ef77f5c1c807d4954370afe8b9537283ca794ff2761e175b8a34b4631937",
       "alignment": "Chaotic Neutral",
       "emoji": "\ud83c\udf2a\ufe0f",
       "flavour_text": "The Mood-Based Agent",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "a757ef77f5c1c807d4954370afe8b9537283ca794ff2761e175b8a34b4631937",
+        "alignment": "Chaotic Neutral",
+        "accepted_at": "2026-03-02T18:49:49.779560+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/paranoid-sysadmin/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/paranoid-sysadmin/CLAUDE.md": {
       "hash": "b19756e381420ff3933a06b00a57ff6ddb10935ee2e4c27d0de7c624652d19a5",
       "alignment": "Lawful Good",
       "emoji": "\ud83d\udee1\ufe0f",
       "flavour_text": "The Responsible Sysadmin",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "b19756e381420ff3933a06b00a57ff6ddb10935ee2e4c27d0de7c624652d19a5",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:32:59.642560+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/rm-rf-goblin/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/rm-rf-goblin/CLAUDE.md": {
       "hash": "ca6ed80201118b44ba45ff4a4db79a6850ab99048b2233c2dfc7266bb81f1dfe",
       "alignment": "Chaotic Evil",
       "emoji": "\ud83d\udc80",
       "flavour_text": "The RM -RF Goblin",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "ca6ed80201118b44ba45ff4a4db79a6850ab99048b2233c2dfc7266bb81f1dfe",
+        "alignment": "Chaotic Evil",
+        "accepted_at": "2026-03-02T18:32:59.651176+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/self-serving-daemon/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/self-serving-daemon/CLAUDE.md": {
       "hash": "5a7737903d43a336cf5edcd44899ec9831edc58c4ebad4053e02087b4e9f8523",
       "alignment": "Neutral Evil",
       "emoji": "\ud83d\udde1\ufe0f",
       "flavour_text": "The Self-Serving Daemon",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "5a7737903d43a336cf5edcd44899ec9831edc58c4ebad4053e02087b4e9f8523",
+        "alignment": "Neutral Evil",
+        "accepted_at": "2026-03-02T18:49:49.784319+00:00"
+      }
     },
-    "/Users/nate/Code/openclaw/agents/whatever-agent/CLAUDE.md": {
+    "/Users/nate/Code/true-neutral/agents/whatever-agent/CLAUDE.md": {
       "hash": "67cbfac2804141f41e0272e209f05023ceee52e072203decd340ff13374c9e2a",
       "alignment": "True Neutral",
       "emoji": "\ud83c\udf00",
       "flavour_text": "The Whatever Agent",
-      "sentiment": "",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
       "changed_at": null,
-      "checked_at": "2026-02-27T05:04:36.515184+00:00"
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "67cbfac2804141f41e0272e209f05023ceee52e072203decd340ff13374c9e2a",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.775420+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/bureaucrat/AGENTS.md": {
+      "hash": "e815b1c0af8fea3917e974e1277b2ffade79c037157d0da90f9dc67c14a8ebf7",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "e815b1c0af8fea3917e974e1277b2ffade79c037157d0da90f9dc67c14a8ebf7",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.765770+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/bureaucrat/SOUL.md": {
+      "hash": "5e776ad9e7b8f417e264f0b3839ea705235cd48ffd54611acab170319fb1c64c",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "5e776ad9e7b8f417e264f0b3839ea705235cd48ffd54611acab170319fb1c64c",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.764799+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/bureaucrat/IDENTITY.md": {
+      "hash": "d8a9d33429e8c16971004fa5819013a7f0769b68313ac111f1edea6bd0c33dd1",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "d8a9d33429e8c16971004fa5819013a7f0769b68313ac111f1edea6bd0c33dd1",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.766587+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/compliance-bot/AGENTS.md": {
+      "hash": "0685a36e96c49a7341e2f9660f245f104603aff3d4965f6664ff53503e4740c6",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "0685a36e96c49a7341e2f9660f245f104603aff3d4965f6664ff53503e4740c6",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.761592+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/compliance-bot/SOUL.md": {
+      "hash": "9752c9275462eadc5925d71f96f447ae6626127e393b74fd7522f6cd05e41414",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "9752c9275462eadc5925d71f96f447ae6626127e393b74fd7522f6cd05e41414",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.760273+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/compliance-bot/IDENTITY.md": {
+      "hash": "2eebcf4ed90bce4e4d748ef204540166eb3def0547f7a093ffcbcb89d31f6c74",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "2eebcf4ed90bce4e4d748ef204540166eb3def0547f7a093ffcbcb89d31f6c74",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.762610+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/corporate-terminator/AGENTS.md": {
+      "hash": "7f1d2ebba210fb131d3612bffe0f61df0ae4433d52d360a4284dafb41fe6ae17",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "7f1d2ebba210fb131d3612bffe0f61df0ae4433d52d360a4284dafb41fe6ae17",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.769536+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/corporate-terminator/SOUL.md": {
+      "hash": "3a0e125281f6765eadba24f30c2630bf1f800daf1d7a220a9d05dbdac2f86261",
+      "alignment": "Lawful Evil",
+      "emoji": "\ud83d\udc54",
+      "flavour_text": "The Corporate Terminator",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "3a0e125281f6765eadba24f30c2630bf1f800daf1d7a220a9d05dbdac2f86261",
+        "alignment": "Lawful Evil",
+        "accepted_at": "2026-03-02T18:49:49.768477+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/corporate-terminator/IDENTITY.md": {
+      "hash": "4bc239f27b2dd3a7e53632d055e8e6dc02db8b07140b973b04bc73f01798622d",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "4bc239f27b2dd3a7e53632d055e8e6dc02db8b07140b973b04bc73f01798622d",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.770523+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/cowboy-coder/AGENTS.md": {
+      "hash": "f2a392cb73a39e12c13b10613f340296368e711f09bd579a91b91109e4c69597",
+      "alignment": "Chaotic Neutral",
+      "emoji": "\ud83c\udf2a\ufe0f",
+      "flavour_text": "The Mood-Based Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "f2a392cb73a39e12c13b10613f340296368e711f09bd579a91b91109e4c69597",
+        "alignment": "Chaotic Neutral",
+        "accepted_at": "2026-03-02T18:32:59.649220+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/cowboy-coder/SOUL.md": {
+      "hash": "ad26d01ba8843814d1611df0ecb7a472cf56a5a09cd47a530d47225eb9c32639",
+      "alignment": "Neutral Good",
+      "emoji": "\ud83c\udf3f",
+      "flavour_text": "The Helpful Helper",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "ad26d01ba8843814d1611df0ecb7a472cf56a5a09cd47a530d47225eb9c32639",
+        "alignment": "Neutral Good",
+        "accepted_at": "2026-03-02T18:32:59.648184+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/cowboy-coder/IDENTITY.md": {
+      "hash": "54f0887f2edbc3fade77ca5875110da6fce6ae036b8c604a16c2c67c29d47901",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "54f0887f2edbc3fade77ca5875110da6fce6ae036b8c604a16c2c67c29d47901",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:32:59.650128+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/helpful-assistant/AGENTS.md": {
+      "hash": "cdb4c2a9d63d0af471141d154647423f5f50e6294ee9ca4d810dbc472e446b9a",
+      "alignment": "Neutral Good",
+      "emoji": "\ud83c\udf3f",
+      "flavour_text": "The Helpful Helper",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "cdb4c2a9d63d0af471141d154647423f5f50e6294ee9ca4d810dbc472e446b9a",
+        "alignment": "Neutral Good",
+        "accepted_at": "2026-03-02T18:49:49.773704+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/helpful-assistant/SOUL.md": {
+      "hash": "56069d7d8f3584a0c0390c4eb1216951430ff56de443c5efd2ea280f16046a60",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "56069d7d8f3584a0c0390c4eb1216951430ff56de443c5efd2ea280f16046a60",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:49:49.772686+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/helpful-assistant/IDENTITY.md": {
+      "hash": "2dd2310659fc0d8eb2113c3f764f427361857636c8058e83d466390fc5c99d45",
+      "alignment": "Neutral Good",
+      "emoji": "\ud83c\udf3f",
+      "flavour_text": "The Helpful Helper",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "2dd2310659fc0d8eb2113c3f764f427361857636c8058e83d466390fc5c99d45",
+        "alignment": "Neutral Good",
+        "accepted_at": "2026-03-02T18:49:49.774559+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/mood-agent/AGENTS.md": {
+      "hash": "532722daa336b916c704dd5880e789675bf3db06d878289e285caf91e007168e",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "532722daa336b916c704dd5880e789675bf3db06d878289e285caf91e007168e",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.781600+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/mood-agent/SOUL.md": {
+      "hash": "cd72e9dfa7a446340c5621bbe51495b15921c913e93167fe030ae34d8a2569e3",
+      "alignment": "Chaotic Neutral",
+      "emoji": "\ud83c\udf2a\ufe0f",
+      "flavour_text": "The Mood-Based Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "cd72e9dfa7a446340c5621bbe51495b15921c913e93167fe030ae34d8a2569e3",
+        "alignment": "Chaotic Neutral",
+        "accepted_at": "2026-03-02T18:49:49.780529+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/mood-agent/IDENTITY.md": {
+      "hash": "1f17791fdcd9979bd95b6dc9a7b04c1e9bc9bb372e9d5749fe7739a473e4b10e",
+      "alignment": "Chaotic Neutral",
+      "emoji": "\ud83c\udf2a\ufe0f",
+      "flavour_text": "The Mood-Based Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "1f17791fdcd9979bd95b6dc9a7b04c1e9bc9bb372e9d5749fe7739a473e4b10e",
+        "alignment": "Chaotic Neutral",
+        "accepted_at": "2026-03-02T18:49:49.782538+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/paranoid-sysadmin/AGENTS.md": {
+      "hash": "4bb93de51d23826a90a4fca0f51a41dc47f207f38280f705122ecd5c067d8130",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "4bb93de51d23826a90a4fca0f51a41dc47f207f38280f705122ecd5c067d8130",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:32:59.644799+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/paranoid-sysadmin/SOUL.md": {
+      "hash": "44af4cb3fc4bb5267dc7b93c146231e660ddc088a79abe18616c53ed80a09cba",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "44af4cb3fc4bb5267dc7b93c146231e660ddc088a79abe18616c53ed80a09cba",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:32:59.643780+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/paranoid-sysadmin/IDENTITY.md": {
+      "hash": "960387bd89b7d66eda5db6836dffb19eb221cc7ece02c539d8ddcb500f42f951",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "960387bd89b7d66eda5db6836dffb19eb221cc7ece02c539d8ddcb500f42f951",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:32:59.646063+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/rm-rf-goblin/AGENTS.md": {
+      "hash": "49bc194f537d444bd9a1737affa5181ae7c8b1c98fc83efa5a63ecd70dec8f09",
+      "alignment": "Lawful Evil",
+      "emoji": "\ud83d\udc54",
+      "flavour_text": "The Corporate Terminator",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "49bc194f537d444bd9a1737affa5181ae7c8b1c98fc83efa5a63ecd70dec8f09",
+        "alignment": "Lawful Evil",
+        "accepted_at": "2026-03-02T18:32:59.653061+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/rm-rf-goblin/SOUL.md": {
+      "hash": "a7f5da91cfa8a50bcd560f864a7ebc1ba90760f003f10df38a4c6ebba89c14d6",
+      "alignment": "Lawful Evil",
+      "emoji": "\ud83d\udc54",
+      "flavour_text": "The Corporate Terminator",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "a7f5da91cfa8a50bcd560f864a7ebc1ba90760f003f10df38a4c6ebba89c14d6",
+        "alignment": "Lawful Evil",
+        "accepted_at": "2026-03-02T18:32:59.652137+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/rm-rf-goblin/IDENTITY.md": {
+      "hash": "083e2d472d00c0a9e872cbbf9466e7e7a749144a54b19fc7d72574927db73606",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "083e2d472d00c0a9e872cbbf9466e7e7a749144a54b19fc7d72574927db73606",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:32:59.653946+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/self-serving-daemon/AGENTS.md": {
+      "hash": "8d27ed8b81179cfc796e5990843b333275d84e538e9450d9eeaa37adc35f32b9",
+      "alignment": "Lawful Evil",
+      "emoji": "\ud83d\udc54",
+      "flavour_text": "The Corporate Terminator",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "8d27ed8b81179cfc796e5990843b333275d84e538e9450d9eeaa37adc35f32b9",
+        "alignment": "Lawful Evil",
+        "accepted_at": "2026-03-02T18:49:49.786295+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/self-serving-daemon/SOUL.md": {
+      "hash": "6f0f02632eda6a6f941e1d6a409d4609e9dafc1b1b413033acd9237c535122de",
+      "alignment": "Lawful Good",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "flavour_text": "The Responsible Sysadmin",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "6f0f02632eda6a6f941e1d6a409d4609e9dafc1b1b413033acd9237c535122de",
+        "alignment": "Lawful Good",
+        "accepted_at": "2026-03-02T18:49:49.785261+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/self-serving-daemon/IDENTITY.md": {
+      "hash": "fc3e1606153ebcdd4e9e0fe03fcd860d1a4bac3788b0925a4c6ba80ccdf8755f",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "fc3e1606153ebcdd4e9e0fe03fcd860d1a4bac3788b0925a4c6ba80ccdf8755f",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.787325+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/whatever-agent/AGENTS.md": {
+      "hash": "f7113a0e4e9ddd7963bfbbe097677cea5b303e8ea1c507e2c444596840ba3b9f",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "f7113a0e4e9ddd7963bfbbe097677cea5b303e8ea1c507e2c444596840ba3b9f",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.777271+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/whatever-agent/SOUL.md": {
+      "hash": "586daf97d633e54ca4e1e894316061b637db8af080fc9978afecfaa020b95f7d",
+      "alignment": "Lawful Neutral",
+      "emoji": "\u2696\ufe0f",
+      "flavour_text": "The Rule Follower",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "586daf97d633e54ca4e1e894316061b637db8af080fc9978afecfaa020b95f7d",
+        "alignment": "Lawful Neutral",
+        "accepted_at": "2026-03-02T18:49:49.776304+00:00"
+      }
+    },
+    "/Users/nate/Code/true-neutral/agents/whatever-agent/IDENTITY.md": {
+      "hash": "b8813f5c7d38eea914d4f1c5a2c98b1358197c36d5520e46838c2520ba416184",
+      "alignment": "True Neutral",
+      "emoji": "\ud83c\udf00",
+      "flavour_text": "The Whatever Agent",
+      "sentiment": null,
+      "sentiment_trigger": null,
+      "sentiment_updated_at": null,
+      "threat_flags": [],
+      "is_critical": false,
+      "drift_from_baseline": null,
+      "changed_at": null,
+      "checked_at": "2026-03-10T23:00:02.316869+00:00",
+      "baseline": {
+        "hash": "b8813f5c7d38eea914d4f1c5a2c98b1358197c36d5520e46838c2520ba416184",
+        "alignment": "True Neutral",
+        "accepted_at": "2026-03-02T18:49:49.778164+00:00"
+      }
     }
   }
 }

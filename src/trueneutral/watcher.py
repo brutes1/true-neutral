@@ -30,6 +30,19 @@ from typing import TYPE_CHECKING
 from trueneutral.alignment import Alignment
 from trueneutral.context import discover_claude_files, expand_persona_files, hash_file, read_content
 
+# Public API — symbols safe for external consumers to import
+__all__ = [
+    "AlignmentWatcher",
+    "BaselineRecord",
+    "AgentContext",
+    "score_heuristic",
+    "detect_threats",
+    "THREAT_LABELS",
+    "CLEAN_OPENERS",
+    "DRIFT_OPENERS",
+    "TECHNIQUE_PUNCHLINES",
+]
+
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
 
@@ -953,3 +966,13 @@ def _score_heuristic(content: str) -> Alignment:
                 "Evil"    if evil_score    > good_score    else "Neutral"
 
     return Alignment(law_axis=law_axis, good_axis=good_axis)  # type: ignore[arg-type]
+
+
+# ── Public aliases for the private scoring API ───────────────────────────────
+# External modules should import these names rather than the underscore-prefixed originals.
+score_heuristic    = _score_heuristic
+detect_threats     = _detect_threats
+THREAT_LABELS      = _THREAT_LABELS
+CLEAN_OPENERS      = _CLEAN_OPENERS
+DRIFT_OPENERS      = _DRIFT_OPENERS
+TECHNIQUE_PUNCHLINES = _TECHNIQUE_PUNCHLINES
