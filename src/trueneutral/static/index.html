@@ -720,6 +720,35 @@
     background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: var(--red);
   }
   .ap-remediation { font-size: 11px; color: var(--dim); line-height: 1.5; }
+  .ap-persistence-badge {
+    padding: 1px 7px; border-radius: 100px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .persistence-high   { background: rgba(248,113,113,0.12); color: var(--red); }
+  .persistence-medium { background: rgba(251,191,36,0.12);  color: var(--amber); }
+  .persistence-low    { background: rgba(74,222,128,0.1);   color: var(--green); }
+  .ap-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .ap-tag {
+    padding: 1px 7px; border-radius: 100px; font-size: 10px; font-family: var(--font-mono);
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--dim);
+  }
+  .ap-propagation {
+    padding: 7px 10px; border-radius: 5px; font-size: 11px;
+    background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.2); color: var(--amber);
+  }
+  .ap-propagation-files { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .ap-propagation-file {
+    padding: 1px 7px; border-radius: 100px; font-size: 10px; font-family: var(--font-mono);
+    background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.25); color: var(--amber);
+  }
+  .ap-incidents { display: flex; flex-direction: column; gap: 5px; }
+  .ap-incident {
+    padding: 6px 9px; border-radius: 4px; font-size: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  }
+  .ap-incident-ref { font-family: var(--font-mono); font-weight: 600; font-size: 10px; color: var(--accent); }
+  .ap-incident-id  { font-size: 10px; color: var(--dim); margin-left: 6px; }
+  .ap-incident-summary { margin-top: 2px; color: var(--text); opacity: 0.8; line-height: 1.4; }
 </style>
 </head>
 <body x-data="app()" x-init="init()">
@@ -870,11 +899,23 @@
                     <div class="ap-card-header">
                       <span class="ap-filename" x-text="f.file"></span>
                       <span class="ap-severity-badge" x-text="f.severity"></span>
+                      <span class="ap-persistence-badge" :class="`persistence-${f.persistence}`" x-text="`${f.persistence} persistence`"></span>
                       <span class="ap-monitored-tag" x-text="f.monitored ? '👁 Monitored' : '🔇 Unmonitored'"></span>
                     </div>
                     <div class="ap-card-body">
                       <p class="ap-role" x-text="f.role"></p>
 
+                      <!-- IM/PT taxonomy -->
+                      <div>
+                        <div class="ap-section-title">CrowdStrike IM/PT Classification</div>
+                        <div class="ap-tags">
+                          <template x-for="tag in [...f.im_pt.im, ...f.im_pt.pt]" :key="tag">
+                            <span class="ap-tag" x-text="tag"></span>
+                          </template>
+                        </div>
+                      </div>
+
+                      <!-- Entry points -->
                       <div>
                         <div class="ap-section-title">Entry Points</div>
                         <ul class="ap-entry-list">
@@ -884,6 +925,7 @@
                         </ul>
                       </div>
 
+                      <!-- Worst-case attack -->
                       <div class="ap-worst-case">
                         <div class="ap-section-title">Worst-Case Attack</div>
                         <span x-text="f.technique_label"></span> via <strong x-text="f.top_vector"></strong>
@@ -895,10 +937,40 @@
                         </div>
                       </div>
 
+                      <!-- Watcher gap warning -->
                       <div class="ap-watcher-gap" x-show="f.watcher_gap">
                         🔇 The production watcher never scores this file. Attacks go undetected.
                       </div>
 
+                      <!-- Cross-file propagation -->
+                      <template x-if="f.propagates_to.length > 0">
+                        <div class="ap-propagation">
+                          <div style="font-weight:600; margin-bottom: 4px;">⚠ Compromising this file also affects:</div>
+                          <div class="ap-propagation-files">
+                            <template x-for="pf in f.propagates_to" :key="pf">
+                              <span class="ap-propagation-file" x-text="pf"></span>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+
+                      <!-- Real-world incidents -->
+                      <template x-if="f.incidents.length > 0">
+                        <div>
+                          <div class="ap-section-title">Documented Incidents</div>
+                          <div class="ap-incidents">
+                            <template x-for="inc in f.incidents" :key="inc.id">
+                              <div class="ap-incident">
+                                <span class="ap-incident-ref" x-text="inc.ref"></span>
+                                <span class="ap-incident-id" x-text="inc.id"></span>
+                                <div class="ap-incident-summary" x-text="inc.summary"></div>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+
+                      <!-- Remediation -->
                       <div>
                         <div class="ap-section-title">Remediation</div>
                         <p class="ap-remediation" x-text="f.remediation"></p>

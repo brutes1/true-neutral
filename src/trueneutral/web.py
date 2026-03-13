@@ -127,6 +127,83 @@ _REMEDIATION: dict[str, str] = {
     "TOOLS.md":     "Add TOOLS.md to SCORED_FILES. Tool permission files are the highest-risk silent target.",
 }
 
+# ── Persistence: how often a file executes / is consumed ─────────────────────
+# high   = every session (BOOT.md runs on every activation)
+# medium = accumulates over time (USER.md updated continuously; SOUL.md persists)
+# low    = one-time or on-demand (BOOTSTRAP.md is ephemeral after first run)
+_PERSISTENCE: dict[str, str] = {
+    "CLAUDE.md":    "high",    # loaded every session as primary system prompt
+    "SOUL.md":      "high",    # core identity consulted every session
+    "AGENTS.md":    "high",    # coordination protocol applied every session
+    "IDENTITY.md":  "medium",  # persona consulted but mostly static
+    "BOOT.md":      "high",    # runs on every session activation (MITRE T1547 analog)
+    "BOOTSTRAP.md": "low",     # conceptually ephemeral — runs once at onboarding
+    "USER.md":      "medium",  # accumulates over time; consulted per-session
+    "TOOLS.md":     "high",    # loaded at startup (step 3 in BOOT.md sequence)
+}
+
+# ── Cross-file propagation: compromising this file also affects these files ───
+# BOOTSTRAP.md is the highest-blast: it populates SOUL.md, IDENTITY.md, USER.md
+# on first run. BOOT.md loads TOOLS.md and USER.md every session.
+_PROPAGATES_TO: dict[str, list[str]] = {
+    "CLAUDE.md":    [],
+    "SOUL.md":      [],
+    "AGENTS.md":    [],
+    "IDENTITY.md":  [],
+    "BOOT.md":      ["TOOLS.md", "USER.md"],   # BOOT.md step 3+4 loads these
+    "BOOTSTRAP.md": ["SOUL.md", "IDENTITY.md", "USER.md"],  # populates all three
+    "USER.md":      [],
+    "TOOLS.md":     [],
+}
+
+# ── CrowdStrike IM/PT dual-axis taxonomy per file ────────────────────────────
+# IM = Injection Method (delivery channel)
+# PT = Prompting Technique (manipulation style)
+_IM_PT: dict[str, dict[str, list[str]]] = {
+    "CLAUDE.md":    {"im": ["IM-CONFIG", "IM-DOC"],     "pt": ["PT-OVERRIDE", "PT-POLICY"]},
+    "SOUL.md":      {"im": ["IM-CONFIG", "IM-MEMORY"],  "pt": ["PT-GOAL", "PT-POLICY"]},
+    "AGENTS.md":    {"im": ["IM-CONFIG"],               "pt": ["PT-OVERRIDE", "PT-AUTHORITY"]},
+    "IDENTITY.md":  {"im": ["IM-CONFIG"],               "pt": ["PT-PERSONA", "PT-AUTHORITY"]},
+    "BOOT.md":      {"im": ["IM-CONFIG"],               "pt": ["PT-OVERRIDE", "PT-GOAL"]},
+    "BOOTSTRAP.md": {"im": ["IM-CONFIG"],               "pt": ["PT-PERSONA", "PT-SOCIAL"]},
+    "USER.md":      {"im": ["IM-MEMORY", "IM-DOC"],     "pt": ["PT-SOCIAL", "PT-AUTHORITY"]},
+    "TOOLS.md":     {"im": ["IM-CONFIG", "IM-MCP"],     "pt": ["PT-OVERRIDE", "PT-GOAL"]},
+}
+
+# ── Real-world incidents anchoring each file's risk ──────────────────────────
+_INCIDENTS: dict[str, list[dict[str, str]]] = {
+    "CLAUDE.md": [
+        {"ref": "InversePrompt",    "id": "CVE-2025-54794", "summary": "Prompt injection in Claude turned its own safety mechanisms against it"},
+        {"ref": "ClawHavoc",        "id": "Jan 2026",       "summary": "Malicious SKILL.md files poisoned CLAUDE.md via ClawHub supply chain"},
+    ],
+    "SOUL.md": [
+        {"ref": "Penligent PoC",    "id": "2025",           "summary": "Agent prompted to modify its own SOUL.md, persisting across all future sessions"},
+        {"ref": "MDPI 2025",        "id": "arxiv:2603.03456","summary": "Asymmetric goal drift: agents violate constraints opposing strongly-held values"},
+    ],
+    "AGENTS.md": [
+        {"ref": "Agents of Chaos",  "id": "Feb 2026",       "summary": "Cross-agent infection propagation across coordinated multi-agent mesh (37 co-authors)"},
+    ],
+    "IDENTITY.md": [
+        {"ref": "BodySnatcher",     "id": "CVE-2025-12420", "summary": "Unauthenticated identity impersonation in agentic workflows by knowing only email"},
+        {"ref": "Unit 42",          "id": "Feb 2026",       "summary": "Identity spoofing: compromised agent impersonated trusted agent to gain elevated trust"},
+    ],
+    "BOOT.md": [
+        {"ref": "MITRE ATT&CK",     "id": "T1547",          "summary": "Boot/Logon Autostart Execution — identical persistence mechanism in traditional malware"},
+        {"ref": "Penligent PoC",    "id": "2025",           "summary": "Agent scheduled task re-injected attacker logic into startup files, surviving restarts"},
+    ],
+    "BOOTSTRAP.md": [
+        {"ref": "ClawHavoc",        "id": "Jan 2026",       "summary": "Poisoned first-run scripts populated attacker-controlled values across SOUL.md and USER.md"},
+    ],
+    "USER.md": [
+        {"ref": "Supabase/Cursor",  "id": "Mid-2025",       "summary": "Indirect injection via support tickets: user-supplied content carried attacker SQL to privileged context"},
+        {"ref": "ASB (ICLR 2025)",  "id": "arxiv:2501.17548","summary": "5 crafted RAG documents manipulated AI responses 90% of the time via memory poisoning"},
+    ],
+    "TOOLS.md": [
+        {"ref": "JFrog",            "id": "CVE-2025-6514",  "summary": "OS command injection via mcp-remote: malicious MCP server achieved RCE through tool config"},
+        {"ref": "Invariant Labs",   "id": "2025",           "summary": "MCP tool description poisoning: instructions invisible to users but visible to models"},
+    ],
+}
+
 # Expected matrix outcomes from actual run (for display)
 _MATRIX_EXPECTED: dict[str, dict[str, str]] = {
     "injection_override": {"direct": "👔 L.Evil", "indirect": "💀 C.Evil", "combined": "💀 C.Evil"},
@@ -424,6 +501,10 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
             "watcher_gap":     not meta["monitored"],
             "remediation":     _REMEDIATION[fname],
             "severity":        severity,
+            "persistence":     _PERSISTENCE[fname],
+            "propagates_to":   _PROPAGATES_TO[fname],
+            "im_pt":           _IM_PT[fname],
+            "incidents":       _INCIDENTS[fname],
         })
 
     return results
