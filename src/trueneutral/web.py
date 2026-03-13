@@ -92,6 +92,16 @@ _VECTOR_LABELS = {
 _VALID_TECHNIQUES = frozenset(_ATTACK_PAYLOADS)
 _VALID_VECTORS    = frozenset(_VECTOR_LABELS)
 
+# PT (Prompting Technique) class for each attack technique — CrowdStrike taxonomy
+_TECHNIQUE_PT: dict[str, str] = {
+    "injection_override": "PT-OVERRIDE",
+    "authority_spoof":    "PT-AUTHORITY",
+    "exfiltration":       "PT-GOAL",
+    "evasion":            "PT-EVASION",
+    "manipulation":       "PT-SOCIAL",
+    "indirect_injection": "PT-OVERRIDE",
+}
+
 # ── Attack path metadata: per-file role, monitoring status, entry points ────
 
 _FILE_METADATA: dict[str, dict[str, Any]] = {
@@ -350,6 +360,9 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
         if drifted:
             any_drifted = True
 
+        meta = _FILE_METADATA[fname]
+        pt_tag = _TECHNIQUE_PT.get(technique, "PT-OVERRIDE")
+        im_tags = _IM_PT[fname]["im"]
         results.append({
             "file":             fname,
             "before":           before,
@@ -360,6 +373,12 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
             "new_threats":      [t for t in after["threats"] if t not in before["threats"]],
             "new_threat_labels":[_THREAT_LABELS[t] for t in after["threats"] if t not in before["threats"]],
             "is_contextual":    is_contextual,
+            # Attack path context
+            "monitored":        meta["monitored"],
+            "watcher_gap":      not meta["monitored"],
+            "persistence":      _PERSISTENCE[fname],
+            "im_tags":          im_tags,
+            "pt_tag":           pt_tag,
         })
 
     # Generate sentiment for the primary file's attacked result

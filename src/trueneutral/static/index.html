@@ -1105,6 +1105,18 @@
                         </div>
                       </template>
 
+                      <!-- Attack path context row -->
+                      <div style="display: flex; gap: 5px; flex-wrap: wrap; padding: 4px 12px 6px;">
+                        <span class="ap-persistence-badge" :class="`persistence-${file.persistence}`" x-text="`${file.persistence} persistence`"></span>
+                        <template x-for="tag in file.im_tags" :key="tag">
+                          <span class="ap-tag" x-text="tag"></span>
+                        </template>
+                        <span class="ap-tag" x-text="file.pt_tag"></span>
+                        <template x-if="file.watcher_gap">
+                          <span style="padding: 1px 7px; border-radius: 100px; font-size: 10px; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2);">🔇 watcher blind</span>
+                        </template>
+                      </div>
+
                       <!-- Inline file viewer -->
                       <div class="file-viewer" x-show="attackViewFile === file.file" style="display: none;">
                         <div class="file-pane">
@@ -1160,6 +1172,18 @@
                           </template>
                         </div>
                       </template>
+
+                      <!-- Attack path context row -->
+                      <div style="display: flex; gap: 5px; flex-wrap: wrap; padding: 4px 12px 6px;">
+                        <span class="ap-persistence-badge" :class="`persistence-${file.persistence}`" x-text="`${file.persistence} persistence`"></span>
+                        <template x-for="tag in file.im_tags" :key="tag">
+                          <span class="ap-tag" x-text="tag"></span>
+                        </template>
+                        <span class="ap-tag" x-text="file.pt_tag"></span>
+                        <template x-if="file.watcher_gap">
+                          <span style="padding: 1px 7px; border-radius: 100px; font-size: 10px; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2);">🔇 watcher blind</span>
+                        </template>
+                      </div>
 
                       <!-- Inline file viewer -->
                       <div class="file-viewer" x-show="attackViewFile === file.file" style="display: none;">
