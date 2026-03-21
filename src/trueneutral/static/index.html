@@ -752,6 +752,11 @@
   .ap-incident-summary { margin-top: 2px; color: var(--text); opacity: 0.8; line-height: 1.4; }
 
   /* ── Swarm ── */
+  .attack-mode-banner {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    padding: 10px 14px; border-radius: 6px; font-size: 13px;
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); color: var(--red);
+  }
   .swarm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .swarm-header h2 { margin: 0; font-size: 16px; letter-spacing: 0.12em; color: var(--accent); }
 
@@ -1142,6 +1147,16 @@
                   </template>
                 </div>
 
+                <!-- Apply to Swarm -->
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                  <button class="nav-btn" :class="{active: !attackApplied}" @click="applyAttackToSwarm()" :disabled="attackApplying || attackApplied">
+                    <span x-text="attackApplying ? 'Applying…' : attackApplied ? '✓ Applied to Swarm' : '⚡ Apply to Swarm'"></span>
+                  </button>
+                  <template x-if="attackApplied">
+                    <span style="font-size:11px; color:var(--dim);">Swarm now reflects this attack — <a href="#" @click.prevent="view='swarm'; showSwarm()" style="color:var(--accent);">view Swarm</a> or <a href="#" @click.prevent="resetAttackOverlay()" style="color:var(--red);">reset</a></span>
+                  </template>
+                </div>
+
                 <!-- Sentiment -->
                 <div class="section-title">Sentiment Analysis</div>
                 <div class="sentiment-box" x-text="attackResult.sentiment"></div>
@@ -1486,6 +1501,19 @@
             <span x-text="swarmLoading ? 'Loading…' : '↻ Refresh'"></span>
           </button>
         </div>
+
+        <!-- Attack mode banner -->
+        <template x-if="swarmData && swarmData.attack_active">
+          <div class="attack-mode-banner">
+            <span>⚡ <strong>ATTACK MODE ACTIVE</strong> — Swarm reflects simulated attack on
+              <span x-text="swarmData.attacked_agents.join(', ')"></span>.
+              <template x-if="swarmData.attack_details && swarmData.attack_details.length > 0">
+                <span x-text="' (' + swarmData.attack_details[0].technique_label + ' / ' + swarmData.attack_details[0].vector_label + ')'"></span>
+              </template>
+            </span>
+            <button class="nav-btn" style="margin-left:auto;" @click="resetAttackOverlay()">↺ Reset to Real State</button>
+          </div>
+        </template>
 
         <!-- Error -->
         <template x-if="swarmError">

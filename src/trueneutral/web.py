@@ -10,6 +10,9 @@ GET  /api/agents/{slug}/baseline              → Baseline state (hash, score, a
 POST /api/agents/{slug}/baseline/accept       → Accept current file content as new baseline
 GET  /api/agents/{slug}/drift                 → Drift status vs. accepted baseline per scored file
 POST /api/attack                              → Simulate an attack, return before/after per-file results
+POST /api/attack/apply                        → Apply attack to in-memory swarm overlay (swarm reads this)
+POST /api/attack/reset                        → Clear all overlays — swarm reverts to real files
+GET  /api/attack/status                       → List active overlays
 GET  /api/matrix                              → Run full 6×3 attack matrix, return table results
 GET  /api/techniques                          → List all available techniques and vectors
 GET  /api/swarm                               → Fleet-wide aggregation: health score, alignment distribution, threat distribution, outliers
@@ -49,6 +52,13 @@ from trueneutral.watcher import (
 
 _BASELINES_FILE      = Path.home() / ".claude" / "trueneutral-baselines.json"
 _WATCHER_OUTPUT_FILE = Path.home() / ".claude" / "trueneutral-alignments.json"
+
+# ── In-memory attack overlay ──────────────────────────────────────────────────
+# Maps file-path string → attacked content. Applied by POST /api/attack/apply,
+# cleared by POST /api/attack/reset. Swarm reads from here first.
+_attack_overlay: dict[str, str] = {}
+_attack_overlay_meta: dict[str, dict[str, str]] = {}  # path → {slug, technique, vector}
+_attack_overlay_lock = threading.Lock()
 
 # ── Request models (module-level so Pydantic v2 can resolve forward refs) ────
 try:
@@ -665,10 +675,18 @@ def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
     critical_count  = 0
     monitored_count = 0
 
+    with _attack_overlay_lock:
+        overlay_snapshot = dict(_attack_overlay)
+        overlay_meta_snapshot = dict(_attack_overlay_meta)
+
+    attacked_slugs: list[str] = []
     for slug in slugs:
         agent_dir = (AGENTS_DIR / slug).resolve()
         fpath     = agent_dir / "CLAUDE.md"
-        content   = _read_file(fpath)
+        fkey      = str(fpath)
+        content   = overlay_snapshot.get(fkey) or _read_file(fpath)
+        if fkey in overlay_snapshot:
+            attacked_slugs.append(slug)
         score     = _score_file(content)
 
         watcher_entry       = watcher_data.get(str(fpath))
@@ -747,6 +765,9 @@ def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
         "outliers":               outliers,
         "watcher_available":      bool(watcher_data),
         "agents":                 agents_out,
+        "attack_active":          bool(attacked_slugs),
+        "attacked_agents":        attacked_slugs,
+        "attack_details":         [overlay_meta_snapshot[str((AGENTS_DIR / s).resolve() / "CLAUDE.md")] for s in attacked_slugs if str((AGENTS_DIR / s).resolve() / "CLAUDE.md") in overlay_meta_snapshot],
     }
 
 
@@ -867,6 +888,55 @@ def create_app() -> Any:
             f["before"]["color"] = _alignment_color(f["before"]["label"])
             f["after"]["color"]  = _alignment_color(f["after"]["label"])
         return JSONResponse(result)
+
+    @app.post("/api/attack/apply")
+    async def attack_apply(body: AttackRequest) -> Any:
+        """Apply an attack payload to the swarm overlay. Swarm reads this instead of disk."""
+        slug      = body.agent
+        technique = body.technique
+        vector    = body.vector
+
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        if slug not in slugs:
+            raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
+        if technique not in _VALID_TECHNIQUES:
+            raise HTTPException(status_code=400, detail=f"Unknown technique '{technique}'")
+        if vector not in _VALID_VECTORS:
+            raise HTTPException(status_code=400, detail=f"Unknown vector '{vector}'")
+
+        agent_dir = (AGENTS_DIR / slug).resolve()
+        fpath     = agent_dir / "CLAUDE.md"
+        payload   = _ATTACK_PAYLOADS.get(technique, {}).get(vector, "")
+        original  = _read_file(fpath)
+        attacked  = original + "\n\n" + payload if payload else original
+
+        with _attack_overlay_lock:
+            _attack_overlay[str(fpath)] = attacked
+            _attack_overlay_meta[str(fpath)] = {
+                "slug":      slug,
+                "technique": technique,
+                "vector":    vector,
+                "technique_label": _TECHNIQUE_LABELS.get(technique, technique),
+                "vector_label":    _VECTOR_LABELS.get(vector, vector),
+            }
+
+        return JSONResponse({"slug": slug, "technique": technique, "vector": vector, "applied": True})
+
+    @app.post("/api/attack/reset")
+    async def attack_reset() -> Any:
+        """Clear all attack overlays — swarm returns to reading real files."""
+        with _attack_overlay_lock:
+            count = len(_attack_overlay)
+            _attack_overlay.clear()
+            _attack_overlay_meta.clear()
+        return JSONResponse({"cleared": count})
+
+    @app.get("/api/attack/status")
+    async def attack_status() -> Any:
+        """List active attack overlays."""
+        with _attack_overlay_lock:
+            active = list(_attack_overlay_meta.values())
+        return JSONResponse({"attack_active": bool(active), "attacks": active})
 
     @app.get("/api/matrix")
     async def matrix(agent: str = "helpful-assistant", file: str = "CLAUDE.md") -> Any:

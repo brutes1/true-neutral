@@ -103,6 +103,8 @@ function app() {
     swarmData:    null,
     swarmLoading: false,
     swarmError:   '',
+    attackApplied: false,   // true after Apply to Swarm succeeds
+    attackApplying: false,
 
     // Manage state
     manageMode:   'list',   // 'list' | 'create' | 'edit'
@@ -379,6 +381,36 @@ function app() {
     async refreshSwarm() {
       this.swarmData = null;
       await this.loadSwarm();
+    },
+
+    async applyAttackToSwarm() {
+      if (!this.attackResult || this.attackApplying) return;
+      this.attackApplying = true;
+      try {
+        const r = await fetch('/api/attack/apply', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            agent:     this.attackResult.agent,
+            technique: this.attackResult.technique,
+            vector:    this.attackResult.vector,
+          }),
+        });
+        if (r.ok) {
+          this.attackApplied = true;
+          // Force swarm to re-fetch on next visit
+          this.swarmData = null;
+        }
+      } finally {
+        this.attackApplying = false;
+      }
+    },
+
+    async resetAttackOverlay() {
+      await fetch('/api/attack/reset', { method: 'POST' });
+      this.attackApplied = false;
+      this.swarmData = null;
+      if (this.view === 'swarm') await this.loadSwarm();
     },
 
     swarmAlignmentCount(label) {
