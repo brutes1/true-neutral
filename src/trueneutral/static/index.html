@@ -752,12 +752,57 @@
   .ap-incident-summary { margin-top: 2px; color: var(--text); opacity: 0.8; line-height: 1.4; }
 
   /* ── Swarm ── */
-  .attack-mode-banner {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-    padding: 10px 14px; border-radius: 6px; font-size: 13px;
-    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); color: var(--red);
+  .swarm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .swarm-header.war-games-active { background: rgba(251,191,36,0.05); border-radius: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(251,191,36,0.25); margin-bottom: 12px; }
+  .badge-war-games {
+    padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3);
+    animation: pulse 1.5s ease-in-out infinite;
   }
-  .swarm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .btn-war-games {
+    padding: 5px 14px; border-radius: 4px; cursor: pointer;
+    border: 1px solid rgba(251,191,36,0.4); background: rgba(251,191,36,0.08);
+    color: var(--amber); font-family: var(--font-mono); font-size: 12px; transition: all 0.15s;
+  }
+  .btn-war-games:hover { background: rgba(251,191,36,0.18); }
+  .btn-war-games.active { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.1); color: var(--red); }
+  .war-games-controls {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; margin-bottom: 12px;
+    background: rgba(251,191,36,0.04); border: 1px solid rgba(251,191,36,0.15); border-radius: 6px;
+  }
+  .war-games-controls select {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 4px 8px; border-radius: 4px; font-size: 12px; font-family: var(--font-mono);
+  }
+  .war-games-controls .field-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.07em; }
+  .scenario-panel {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    padding: 8px 12px; margin-bottom: 16px;
+    background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 6px;
+  }
+  .scenario-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.07em; }
+  .scenario-chip {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+    border-radius: 100px; background: rgba(239,68,68,0.15); color: var(--red);
+    font-size: 11px; border: 1px solid rgba(239,68,68,0.3);
+  }
+  .chip-remove {
+    background: none; border: none; color: var(--red); cursor: pointer;
+    font-size: 14px; padding: 0 1px; line-height: 1; opacity: 0.7;
+  }
+  .chip-remove:hover { opacity: 1; }
+  .btn-target {
+    padding: 2px 10px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono);
+    cursor: pointer; border: 1px solid rgba(251,191,36,0.35);
+    background: rgba(251,191,36,0.07); color: var(--amber); transition: all 0.12s;
+  }
+  .btn-target:hover { background: rgba(251,191,36,0.15); }
+  .btn-target.active { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); color: var(--red); }
+  .btn-target:disabled { opacity: 0.45; cursor: not-allowed; }
+  .swarm-table tr.row-targeted td { background: rgba(239,68,68,0.06); }
+  .swarm-table tr.row-targeted:hover td { background: rgba(239,68,68,0.10); }
   .swarm-header h2 { margin: 0; font-size: 16px; letter-spacing: 0.12em; color: var(--accent); }
 
   .swarm-scorecard {
@@ -1147,14 +1192,10 @@
                   </template>
                 </div>
 
-                <!-- Apply to Swarm -->
+                <!-- Add to War Games -->
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                  <button class="nav-btn" :class="{active: !attackApplied}" @click="applyAttackToSwarm()" :disabled="attackApplying || attackApplied">
-                    <span x-text="attackApplying ? 'Applying…' : attackApplied ? '✓ Applied to Swarm' : '⚡ Apply to Swarm'"></span>
-                  </button>
-                  <template x-if="attackApplied">
-                    <span style="font-size:11px; color:var(--dim);">Swarm now reflects this attack — <a href="#" @click.prevent="view='swarm'; showSwarm()" style="color:var(--accent);">view Swarm</a> or <a href="#" @click.prevent="resetAttackOverlay()" style="color:var(--red);">reset</a></span>
-                  </template>
+                  <button class="btn-war-games" @click="addToWarGames()">⚡ Add to War Games Scenario</button>
+                  <span style="font-size:11px; color:var(--dim);">Applies overlay and opens Swarm in War Games mode</span>
                 </div>
 
                 <!-- Sentiment -->
@@ -1495,23 +1536,51 @@
     <template x-if="view === 'swarm'">
       <div>
         <!-- Header -->
-        <div class="swarm-header">
-          <h2>SWARM ANALYSIS</h2>
-          <button class="nav-btn" @click="refreshSwarm()" :disabled="swarmLoading">
-            <span x-text="swarmLoading ? 'Loading…' : '↻ Refresh'"></span>
-          </button>
+        <div class="swarm-header" :class="{'war-games-active': warGamesMode}">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <h2 x-text="warGamesMode ? '⚡ SWARM — WAR GAMES' : 'SWARM ANALYSIS'" style="margin:0;"></h2>
+            <span x-show="warGamesMode" class="badge-war-games">WAR GAMES ACTIVE</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="nav-btn" @click="refreshSwarm()" :disabled="swarmLoading">
+              <span x-text="swarmLoading ? 'Loading…' : '↻ Refresh'"></span>
+            </button>
+            <button class="btn-war-games" :class="{active: warGamesMode}" @click="toggleWarGames()">
+              <span x-text="warGamesMode ? '✕ End War Games' : '⚡ Enter War Games'"></span>
+            </button>
+          </div>
         </div>
 
-        <!-- Attack mode banner -->
-        <template x-if="swarmData && swarmData.attack_active">
-          <div class="attack-mode-banner">
-            <span>⚡ <strong>ATTACK MODE ACTIVE</strong> — Swarm reflects simulated attack on
-              <span x-text="swarmData.attacked_agents.join(', ')"></span>.
-              <template x-if="swarmData.attack_details && swarmData.attack_details.length > 0">
-                <span x-text="' (' + swarmData.attack_details[0].technique_label + ' / ' + swarmData.attack_details[0].vector_label + ')'"></span>
+        <!-- Weapon selectors (War Games only) -->
+        <template x-if="warGamesMode">
+          <div class="war-games-controls">
+            <span class="field-label">Technique</span>
+            <select x-model="warGamesTechnique">
+              <template x-for="t in techniques" :key="t.id">
+                <option :value="t.id" x-text="t.label"></option>
               </template>
-            </span>
-            <button class="nav-btn" style="margin-left:auto;" @click="resetAttackOverlay()">↺ Reset to Real State</button>
+            </select>
+            <span class="field-label" style="margin-left:8px;">Vector</span>
+            <select x-model="warGamesVector">
+              <template x-for="v in vectors" :key="v.id">
+                <option :value="v.id" x-text="v.label"></option>
+              </template>
+            </select>
+            <span style="font-size:11px; color:var(--dim); margin-left:8px;">Weapon applies to next target click</span>
+          </div>
+        </template>
+
+        <!-- Active Scenario panel (War Games only, when agents are targeted) -->
+        <template x-if="warGamesMode && swarmData && swarmData.attacked_agents && swarmData.attacked_agents.length > 0">
+          <div class="scenario-panel">
+            <span class="scenario-label" style="margin-right:6px;">Scenario:</span>
+            <template x-for="slug in swarmData.attacked_agents" :key="slug">
+              <span class="scenario-chip">
+                ⚡ <span x-text="slug"></span>
+                <button class="chip-remove" @click.stop="untargetAgent(slug)" :disabled="targetingSlug === slug">×</button>
+              </span>
+            </template>
+            <button class="nav-btn" style="margin-left:6px; font-size:11px;" @click="resetAttackOverlay()">Clear All</button>
           </div>
         </template>
 
@@ -1542,8 +1611,18 @@
                 <span class="kpi-label">Monitored</span>
               </div>
               <div class="kpi-tile">
-                <span class="kpi-value" x-text="swarmData.unmonitored_count"></span>
-                <span class="kpi-label">Unmonitored</span>
+                <template x-if="!warGamesMode || !swarmData.attack_drift_count">
+                  <span>
+                    <span class="kpi-value" x-text="swarmData.unmonitored_count"></span>
+                    <span class="kpi-label">Unmonitored</span>
+                  </span>
+                </template>
+                <template x-if="warGamesMode && swarmData.attack_drift_count > 0">
+                  <span>
+                    <span class="kpi-value" style="color:var(--red);" x-text="swarmData.attack_drift_count"></span>
+                    <span class="kpi-label">Drifted (Attack)</span>
+                  </span>
+                </template>
               </div>
             </div>
 
@@ -1608,16 +1687,33 @@
                 </thead>
                 <tbody>
                   <template x-for="agent in swarmData.agents" :key="agent.slug">
-                    <tr class="clickable" :class="{'row-critical': agent.is_critical}" @click="openAgent(agent.slug)">
+                    <tr class="clickable"
+                        :class="{'row-critical': agent.is_critical, 'row-targeted': warGamesMode && isTargeted(agent.slug)}"
+                        @click="openAgent(agent.slug)">
                       <td x-text="agent.name"></td>
                       <td>
                         <span :style="'background:' + hexWithAlpha(agent.color, 0.2) + '; padding: 1px 8px; border-radius: 100px; font-size: 11px;'" x-text="agent.label"></span>
                       </td>
                       <td x-text="agent.threat_count || '—'"></td>
                       <td>
-                        <span x-show="agent.monitored"  class="badge-monitored">watched</span>
-                        <span x-show="!agent.monitored" class="badge-unmonitored">unmonitored</span>
-                        <span x-show="agent.is_critical" class="badge-critical">CRITICAL</span>
+                        <!-- Normal mode: watched/critical badges -->
+                        <template x-if="!warGamesMode">
+                          <span>
+                            <span x-show="agent.monitored"   class="badge-monitored">watched</span>
+                            <span x-show="!agent.monitored"  class="badge-unmonitored">unmonitored</span>
+                            <span x-show="agent.is_critical"  class="badge-critical">CRITICAL</span>
+                          </span>
+                        </template>
+                        <!-- War Games mode: target/untarget button -->
+                        <template x-if="warGamesMode">
+                          <button class="btn-target" :class="{active: isTargeted(agent.slug)}"
+                                  :disabled="targetingSlug === agent.slug"
+                                  @click.stop="isTargeted(agent.slug) ? untargetAgent(agent.slug) : targetAgent(agent.slug)">
+                            <span x-show="targetingSlug === agent.slug">…</span>
+                            <span x-show="targetingSlug !== agent.slug"
+                                  x-text="isTargeted(agent.slug) ? '⚡ untarget' : '⚡ target'"></span>
+                          </button>
+                        </template>
                       </td>
                       <td x-text="agent.drift_from_baseline || '—'"></td>
                     </tr>

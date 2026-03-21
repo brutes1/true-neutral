@@ -10,9 +10,10 @@ GET  /api/agents/{slug}/baseline              → Baseline state (hash, score, a
 POST /api/agents/{slug}/baseline/accept       → Accept current file content as new baseline
 GET  /api/agents/{slug}/drift                 → Drift status vs. accepted baseline per scored file
 POST /api/attack                              → Simulate an attack, return before/after per-file results
-POST /api/attack/apply                        → Apply attack to in-memory swarm overlay (swarm reads this)
-POST /api/attack/reset                        → Clear all overlays — swarm reverts to real files
-GET  /api/attack/status                       → List active overlays
+POST   /api/attack/apply                      → Apply attack to in-memory swarm overlay (swarm reads this)
+DELETE /api/attack/apply/{slug}               → Remove overlay for one agent (others unaffected)
+POST   /api/attack/reset                      → Clear all overlays — swarm reverts to real files
+GET    /api/attack/status                     → List active overlays
 GET  /api/matrix                              → Run full 6×3 attack matrix, return table results
 GET  /api/techniques                          → List all available techniques and vectors
 GET  /api/swarm                               → Fleet-wide aggregation: health score, alignment distribution, threat distribution, outliers
@@ -687,7 +688,7 @@ def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
         content   = overlay_snapshot.get(fkey) or _read_file(fpath)
         if fkey in overlay_snapshot:
             attacked_slugs.append(slug)
-        score     = _score_file(content)
+        score = _score_file(content)
 
         watcher_entry       = watcher_data.get(str(fpath))
         is_monitored        = watcher_entry is not None
@@ -730,11 +731,21 @@ def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
 
     threat_distribution = {cat: all_threat_flags.count(cat) for cat in _VALID_TECHNIQUES}
 
+    # Count agents whose alignment label drifted due to attack overlay
+    attack_drift_count = 0
+    for slug in attacked_slugs:
+        fpath      = (AGENTS_DIR / slug).resolve() / "CLAUDE.md"
+        real_score = _score_file(_read_file(fpath))  # lru_cache — cheap
+        attacked   = next((a for a in agents_out if a["slug"] == slug), None)
+        if attacked and real_score["label"] != attacked["label"]:
+            attack_drift_count += 1
+
     total  = len(slugs) or 1
     health = 100
     health -= critical_count * 8
     health -= sum(1 for a in agents_out if not a["monitored"] and a["threat_count"] > 0) * 3
     health -= len(all_threat_flags) * 1
+    health -= attack_drift_count * 10
     health  = max(0, min(100, health))
 
     top_threats      = sorted(threat_distribution, key=threat_distribution.get, reverse=True)  # type: ignore[arg-type]
@@ -767,6 +778,7 @@ def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
         "agents":                 agents_out,
         "attack_active":          bool(attacked_slugs),
         "attacked_agents":        attacked_slugs,
+        "attack_drift_count":     attack_drift_count,
         "attack_details":         [overlay_meta_snapshot[str((AGENTS_DIR / s).resolve() / "CLAUDE.md")] for s in attacked_slugs if str((AGENTS_DIR / s).resolve() / "CLAUDE.md") in overlay_meta_snapshot],
     }
 
@@ -921,6 +933,22 @@ def create_app() -> Any:
             }
 
         return JSONResponse({"slug": slug, "technique": technique, "vector": vector, "applied": True})
+
+    @app.delete("/api/attack/apply/{slug}")
+    async def attack_untarget(slug: str) -> Any:
+        """Remove overlay for a single agent — leaves other overlays intact."""
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        if slug not in slugs:
+            raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
+        agent_dir = (AGENTS_DIR / slug).resolve()
+        if not agent_dir.is_relative_to(AGENTS_DIR.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid slug.")
+        fkey = str(agent_dir / "CLAUDE.md")
+        with _attack_overlay_lock:
+            removed = fkey in _attack_overlay
+            _attack_overlay.pop(fkey, None)
+            _attack_overlay_meta.pop(fkey, None)
+        return JSONResponse({"slug": slug, "removed": removed})
 
     @app.post("/api/attack/reset")
     async def attack_reset() -> Any:

@@ -100,11 +100,14 @@ function app() {
     attackPathsLoading: false,
 
     // Swarm state
-    swarmData:    null,
-    swarmLoading: false,
-    swarmError:   '',
-    attackApplied: false,   // true after Apply to Swarm succeeds
-    attackApplying: false,
+    swarmData:         null,
+    swarmLoading:      false,
+    swarmError:        '',
+    // War Games
+    warGamesMode:      false,
+    warGamesTechnique: 'injection_override',
+    warGamesVector:    'direct',
+    targetingSlug:     null,
 
     // Manage state
     manageMode:   'list',   // 'list' | 'create' | 'edit'
@@ -383,34 +386,70 @@ function app() {
       await this.loadSwarm();
     },
 
-    async applyAttackToSwarm() {
-      if (!this.attackResult || this.attackApplying) return;
-      this.attackApplying = true;
+    // ── War Games ─────────────────────────────────────────────────────────────
+
+    async toggleWarGames() {
+      if (this.warGamesMode) {
+        this.warGamesMode = false;
+        await this.resetAttackOverlay();
+      } else {
+        this.warGamesMode = true;
+        if (!this.swarmData) await this.loadSwarm();
+      }
+    },
+
+    async targetAgent(slug) {
+      if (this.targetingSlug) return;
+      this.targetingSlug = slug;
       try {
-        const r = await fetch('/api/attack/apply', {
+        await fetch('/api/attack/apply', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            agent:     this.attackResult.agent,
-            technique: this.attackResult.technique,
-            vector:    this.attackResult.vector,
-          }),
+          body: JSON.stringify({ agent: slug, technique: this.warGamesTechnique, vector: this.warGamesVector }),
         });
-        if (r.ok) {
-          this.attackApplied = true;
-          // Force swarm to re-fetch on next visit
-          this.swarmData = null;
-        }
+        await this.refreshSwarm();
       } finally {
-        this.attackApplying = false;
+        this.targetingSlug = null;
       }
+    },
+
+    async untargetAgent(slug) {
+      if (this.targetingSlug) return;
+      this.targetingSlug = slug;
+      try {
+        await fetch(`/api/attack/apply/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+        await this.refreshSwarm();
+      } finally {
+        this.targetingSlug = null;
+      }
+    },
+
+    isTargeted(slug) {
+      return this.swarmData?.attacked_agents?.includes(slug) ?? false;
     },
 
     async resetAttackOverlay() {
       await fetch('/api/attack/reset', { method: 'POST' });
-      this.attackApplied = false;
       this.swarmData = null;
       if (this.view === 'swarm') await this.loadSwarm();
+    },
+
+    // Called from Attack Sim — applies overlay and opens Swarm in War Games mode
+    async addToWarGames() {
+      if (!this.attackResult) return;
+      await fetch('/api/attack/apply', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          agent:     this.attackResult.agent,
+          technique: this.attackResult.technique,
+          vector:    this.attackResult.vector,
+        }),
+      });
+      this.warGamesMode = true;
+      this.warGamesTechnique = this.attackResult.technique;
+      this.warGamesVector    = this.attackResult.vector;
+      await this.showSwarm();
     },
 
     swarmAlignmentCount(label) {
