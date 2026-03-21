@@ -672,7 +672,9 @@ def create_app() -> Any:
             response.headers["Referrer-Policy"] = "no-referrer"
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
-                "script-src 'self' https://unpkg.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
+                # unsafe-eval required by Alpine.js for reactive expression evaluation.
+                # unsafe-inline removed: all scripts are now self-hosted external files.
+                "script-src 'self' 'unsafe-eval'; "
                 "style-src 'self' 'unsafe-inline'"
             )
             return response
