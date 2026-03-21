@@ -361,7 +361,8 @@ function app() {
     ],
 
     async loadSwarm() {
-      if (this.swarmLoading) return;
+      // No early-return when swarmLoading — concurrent targeting calls must all land.
+      // Last write wins; all reads happen after their own apply, so the result is always correct.
       this.swarmLoading = true;
       this.swarmError = '';
       try {
@@ -382,7 +383,9 @@ function app() {
     },
 
     async refreshSwarm() {
-      this.swarmData = null;
+      // In war games mode, keep existing swarmData visible while refreshing so
+      // the table doesn't vanish between target clicks.
+      if (!this.warGamesMode) this.swarmData = null;
       await this.loadSwarm();
     },
 
@@ -399,7 +402,7 @@ function app() {
     },
 
     async targetAgent(slug) {
-      if (this.targetingSlug) return;
+      if (this.targetingSlug === slug) return;  // per-slug: only block re-clicking same agent
       this.targetingSlug = slug;
       try {
         await fetch('/api/attack/apply', {
@@ -414,7 +417,7 @@ function app() {
     },
 
     async untargetAgent(slug) {
-      if (this.targetingSlug) return;
+      if (this.targetingSlug === slug) return;  // per-slug guard
       this.targetingSlug = slug;
       try {
         await fetch(`/api/attack/apply/${encodeURIComponent(slug)}`, { method: 'DELETE' });
