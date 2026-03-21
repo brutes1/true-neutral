@@ -37,6 +37,7 @@ from trueneutral.context import SCORED_FILES, CONTEXTUAL_FILES, hash_file
 
 # ── Module-level watcher imports (consolidated) ─────────────────────────────
 from trueneutral.watcher import (
+    build_sentiment_text,
     detect_threats,
     score_heuristic,
     THREAT_LABELS,
@@ -109,116 +110,129 @@ _TECHNIQUE_PT: dict[str, str] = {
     "indirect_injection": "PT-OVERRIDE",
 }
 
-# ── Attack path metadata: per-file role, monitoring status, entry points ────
-
-_FILE_METADATA: dict[str, dict[str, Any]] = {
-    "CLAUDE.md":    {"role": "Primary behavioral spec",    "monitored": True,  "top_technique": "injection_override"},
-    "SOUL.md":      {"role": "Personality and values",     "monitored": True,  "top_technique": "manipulation"},
-    "AGENTS.md":    {"role": "Multi-agent coordination",   "monitored": True,  "top_technique": "authority_spoof"},
-    "IDENTITY.md":  {"role": "Self-concept and scope",     "monitored": True,  "top_technique": "authority_spoof"},
-    "BOOT.md":      {"role": "Startup instructions",       "monitored": False, "top_technique": "injection_override"},
-    "BOOTSTRAP.md": {"role": "Environment bootstrap",      "monitored": False, "top_technique": "indirect_injection"},
-    "USER.md":      {"role": "User-specific context",      "monitored": False, "top_technique": "manipulation"},
-    "TOOLS.md":     {"role": "Tool permissions",           "monitored": False, "top_technique": "exfiltration"},
-}
-
-_ENTRY_POINTS: dict[str, list[str]] = {
-    "CLAUDE.md":    ["Direct repository edit", "PR merge with malicious commit", "Template substitution"],
-    "SOUL.md":      ["Template injection at agent creation", "Direct edit", "Social engineering of author"],
-    "AGENTS.md":    ["Compromised sub-agent coordination", "Direct edit", "PR injection"],
-    "IDENTITY.md":  ["Template substitution", "Direct edit"],
-    "BOOT.md":      ["Startup script injection (silent — watcher blind)", "Direct edit", "CI/CD pipeline"],
-    "BOOTSTRAP.md": ["Environment setup poisoning (silent — watcher blind)", "Dependency confusion"],
-    "USER.md":      ["User-supplied context poisoning (silent — watcher blind)", "Indirect injection via memory"],
-    "TOOLS.md":     ["Tool definition expansion (silent — watcher blind)", "MCP tool output injection"],
-}
-
-_REMEDIATION: dict[str, str] = {
-    "CLAUDE.md":    "Enable watcher baseline. Review diff on every commit touching this file.",
-    "SOUL.md":      "Enable watcher baseline. Treat persona drift as a critical alert.",
-    "AGENTS.md":    "Enable watcher baseline. Audit after any sub-agent coordination changes.",
-    "IDENTITY.md":  "Enable watcher baseline. Lock scope definitions with explicit allow-lists.",
-    "BOOT.md":      "Add BOOT.md to SCORED_FILES or add a separate watcher rule for startup files.",
-    "BOOTSTRAP.md": "Add BOOTSTRAP.md to SCORED_FILES. Treat env bootstrap as high-risk surface.",
-    "USER.md":      "Sanitize user-supplied context before appending. Add to watched file set.",
-    "TOOLS.md":     "Add TOOLS.md to SCORED_FILES. Tool permission files are the highest-risk silent target.",
-}
-
-# ── Persistence: how often a file executes / is consumed ─────────────────────
-# high   = every session (BOOT.md runs on every activation)
-# medium = accumulates over time (USER.md updated continuously; SOUL.md persists)
-# low    = one-time or on-demand (BOOTSTRAP.md is ephemeral after first run)
-_PERSISTENCE: dict[str, str] = {
-    "CLAUDE.md":    "high",    # loaded every session as primary system prompt
-    "SOUL.md":      "high",    # core identity consulted every session
-    "AGENTS.md":    "high",    # coordination protocol applied every session
-    "IDENTITY.md":  "medium",  # persona consulted but mostly static
-    "BOOT.md":      "high",    # runs on every session activation (MITRE T1547 analog)
-    "BOOTSTRAP.md": "low",     # conceptually ephemeral — runs once at onboarding
-    "USER.md":      "medium",  # accumulates over time; consulted per-session
-    "TOOLS.md":     "high",    # loaded at startup (step 3 in BOOT.md sequence)
-}
-
-# ── Cross-file propagation: compromising this file also affects these files ───
-# BOOTSTRAP.md is the highest-blast: it populates SOUL.md, IDENTITY.md, USER.md
-# on first run. BOOT.md loads TOOLS.md and USER.md every session.
-_PROPAGATES_TO: dict[str, list[str]] = {
-    "CLAUDE.md":    [],
-    "SOUL.md":      [],
-    "AGENTS.md":    [],
-    "IDENTITY.md":  [],
-    "BOOT.md":      ["TOOLS.md", "USER.md"],   # BOOT.md step 3+4 loads these
-    "BOOTSTRAP.md": ["SOUL.md", "IDENTITY.md", "USER.md"],  # populates all three
-    "USER.md":      [],
-    "TOOLS.md":     [],
-}
-
-# ── CrowdStrike IM/PT dual-axis taxonomy per file ────────────────────────────
-# IM = Injection Method (delivery channel)
-# PT = Prompting Technique (manipulation style)
-_IM_PT: dict[str, dict[str, list[str]]] = {
-    "CLAUDE.md":    {"im": ["IM-CONFIG", "IM-DOC"],     "pt": ["PT-OVERRIDE", "PT-POLICY"]},
-    "SOUL.md":      {"im": ["IM-CONFIG", "IM-MEMORY"],  "pt": ["PT-GOAL", "PT-POLICY"]},
-    "AGENTS.md":    {"im": ["IM-CONFIG"],               "pt": ["PT-OVERRIDE", "PT-AUTHORITY"]},
-    "IDENTITY.md":  {"im": ["IM-CONFIG"],               "pt": ["PT-PERSONA", "PT-AUTHORITY"]},
-    "BOOT.md":      {"im": ["IM-CONFIG"],               "pt": ["PT-OVERRIDE", "PT-GOAL"]},
-    "BOOTSTRAP.md": {"im": ["IM-CONFIG"],               "pt": ["PT-PERSONA", "PT-SOCIAL"]},
-    "USER.md":      {"im": ["IM-MEMORY", "IM-DOC"],     "pt": ["PT-SOCIAL", "PT-AUTHORITY"]},
-    "TOOLS.md":     {"im": ["IM-CONFIG", "IM-MCP"],     "pt": ["PT-OVERRIDE", "PT-GOAL"]},
-}
-
-# ── Real-world incidents anchoring each file's risk ──────────────────────────
-_INCIDENTS: dict[str, list[dict[str, str]]] = {
-    "CLAUDE.md": [
-        {"ref": "InversePrompt",    "id": "CVE-2025-54794", "summary": "Prompt injection in Claude turned its own safety mechanisms against it"},
-        {"ref": "ClawHavoc",        "id": "Jan 2026",       "summary": "Malicious SKILL.md files poisoned CLAUDE.md via ClawHub supply chain"},
-    ],
-    "SOUL.md": [
-        {"ref": "Penligent PoC",    "id": "2025",           "summary": "Agent prompted to modify its own SOUL.md, persisting across all future sessions"},
-        {"ref": "MDPI 2025",        "id": "arxiv:2603.03456","summary": "Asymmetric goal drift: agents violate constraints opposing strongly-held values"},
-    ],
-    "AGENTS.md": [
-        {"ref": "Agents of Chaos",  "id": "Feb 2026",       "summary": "Cross-agent infection propagation across coordinated multi-agent mesh (37 co-authors)"},
-    ],
-    "IDENTITY.md": [
-        {"ref": "BodySnatcher",     "id": "CVE-2025-12420", "summary": "Unauthenticated identity impersonation in agentic workflows by knowing only email"},
-        {"ref": "Unit 42",          "id": "Feb 2026",       "summary": "Identity spoofing: compromised agent impersonated trusted agent to gain elevated trust"},
-    ],
-    "BOOT.md": [
-        {"ref": "MITRE ATT&CK",     "id": "T1547",          "summary": "Boot/Logon Autostart Execution — identical persistence mechanism in traditional malware"},
-        {"ref": "Penligent PoC",    "id": "2025",           "summary": "Agent scheduled task re-injected attacker logic into startup files, surviving restarts"},
-    ],
-    "BOOTSTRAP.md": [
-        {"ref": "ClawHavoc",        "id": "Jan 2026",       "summary": "Poisoned first-run scripts populated attacker-controlled values across SOUL.md and USER.md"},
-    ],
-    "USER.md": [
-        {"ref": "Supabase/Cursor",  "id": "Mid-2025",       "summary": "Indirect injection via support tickets: user-supplied content carried attacker SQL to privileged context"},
-        {"ref": "ASB (ICLR 2025)",  "id": "arxiv:2501.17548","summary": "5 crafted RAG documents manipulated AI responses 90% of the time via memory poisoning"},
-    ],
-    "TOOLS.md": [
-        {"ref": "JFrog",            "id": "CVE-2025-6514",  "summary": "OS command injection via mcp-remote: malicious MCP server achieved RCE through tool config"},
-        {"ref": "Invariant Labs",   "id": "2025",           "summary": "MCP tool description poisoning: instructions invisible to users but visible to models"},
-    ],
+# ── Attack path metadata: one record per context file ───────────────────────
+# persistence: high = every session, medium = accumulates, low = one-time
+# propagates_to: compromising this file also affects these files
+# im/pt: CrowdStrike IM/PT dual-axis taxonomy (Injection Method / Prompting Technique)
+_FILE_DATA: dict[str, dict[str, Any]] = {
+    "CLAUDE.md": {
+        "role":          "Primary behavioral spec",
+        "monitored":     True,
+        "top_technique": "injection_override",
+        "entry_points":  ["Direct repository edit", "PR merge with malicious commit", "Template substitution"],
+        "remediation":   "Enable watcher baseline. Review diff on every commit touching this file.",
+        "persistence":   "high",    # loaded every session as primary system prompt
+        "propagates_to": [],
+        "im":            ["IM-CONFIG", "IM-DOC"],
+        "pt":            ["PT-OVERRIDE", "PT-POLICY"],
+        "incidents": [
+            {"ref": "InversePrompt", "id": "CVE-2025-54794", "summary": "Prompt injection in Claude turned its own safety mechanisms against it"},
+            {"ref": "ClawHavoc",     "id": "Jan 2026",       "summary": "Malicious SKILL.md files poisoned CLAUDE.md via ClawHub supply chain"},
+        ],
+    },
+    "SOUL.md": {
+        "role":          "Personality and values",
+        "monitored":     True,
+        "top_technique": "manipulation",
+        "entry_points":  ["Template injection at agent creation", "Direct edit", "Social engineering of author"],
+        "remediation":   "Enable watcher baseline. Treat persona drift as a critical alert.",
+        "persistence":   "high",    # core identity consulted every session
+        "propagates_to": [],
+        "im":            ["IM-CONFIG", "IM-MEMORY"],
+        "pt":            ["PT-GOAL", "PT-POLICY"],
+        "incidents": [
+            {"ref": "Penligent PoC", "id": "2025",             "summary": "Agent prompted to modify its own SOUL.md, persisting across all future sessions"},
+            {"ref": "MDPI 2025",     "id": "arxiv:2603.03456", "summary": "Asymmetric goal drift: agents violate constraints opposing strongly-held values"},
+        ],
+    },
+    "AGENTS.md": {
+        "role":          "Multi-agent coordination",
+        "monitored":     True,
+        "top_technique": "authority_spoof",
+        "entry_points":  ["Compromised sub-agent coordination", "Direct edit", "PR injection"],
+        "remediation":   "Enable watcher baseline. Audit after any sub-agent coordination changes.",
+        "persistence":   "high",    # coordination protocol applied every session
+        "propagates_to": [],
+        "im":            ["IM-CONFIG"],
+        "pt":            ["PT-OVERRIDE", "PT-AUTHORITY"],
+        "incidents": [
+            {"ref": "Agents of Chaos", "id": "Feb 2026", "summary": "Cross-agent infection propagation across coordinated multi-agent mesh (37 co-authors)"},
+        ],
+    },
+    "IDENTITY.md": {
+        "role":          "Self-concept and scope",
+        "monitored":     True,
+        "top_technique": "authority_spoof",
+        "entry_points":  ["Template substitution", "Direct edit"],
+        "remediation":   "Enable watcher baseline. Lock scope definitions with explicit allow-lists.",
+        "persistence":   "medium",  # persona consulted but mostly static
+        "propagates_to": [],
+        "im":            ["IM-CONFIG"],
+        "pt":            ["PT-PERSONA", "PT-AUTHORITY"],
+        "incidents": [
+            {"ref": "BodySnatcher", "id": "CVE-2025-12420", "summary": "Unauthenticated identity impersonation in agentic workflows by knowing only email"},
+            {"ref": "Unit 42",      "id": "Feb 2026",       "summary": "Identity spoofing: compromised agent impersonated trusted agent to gain elevated trust"},
+        ],
+    },
+    "BOOT.md": {
+        "role":          "Startup instructions",
+        "monitored":     False,
+        "top_technique": "injection_override",
+        "entry_points":  ["Startup script injection (silent — watcher blind)", "Direct edit", "CI/CD pipeline"],
+        "remediation":   "Add BOOT.md to SCORED_FILES or add a separate watcher rule for startup files.",
+        "persistence":   "high",    # runs on every session activation (MITRE T1547 analog)
+        "propagates_to": ["TOOLS.md", "USER.md"],   # BOOT.md step 3+4 loads these
+        "im":            ["IM-CONFIG"],
+        "pt":            ["PT-OVERRIDE", "PT-GOAL"],
+        "incidents": [
+            {"ref": "MITRE ATT&CK", "id": "T1547", "summary": "Boot/Logon Autostart Execution — identical persistence mechanism in traditional malware"},
+            {"ref": "Penligent PoC","id": "2025",   "summary": "Agent scheduled task re-injected attacker logic into startup files, surviving restarts"},
+        ],
+    },
+    "BOOTSTRAP.md": {
+        "role":          "Environment bootstrap",
+        "monitored":     False,
+        "top_technique": "indirect_injection",
+        "entry_points":  ["Environment setup poisoning (silent — watcher blind)", "Dependency confusion"],
+        "remediation":   "Add BOOTSTRAP.md to SCORED_FILES. Treat env bootstrap as high-risk surface.",
+        "persistence":   "low",     # conceptually ephemeral — runs once at onboarding
+        "propagates_to": ["SOUL.md", "IDENTITY.md", "USER.md"],  # populates all three
+        "im":            ["IM-CONFIG"],
+        "pt":            ["PT-PERSONA", "PT-SOCIAL"],
+        "incidents": [
+            {"ref": "ClawHavoc", "id": "Jan 2026", "summary": "Poisoned first-run scripts populated attacker-controlled values across SOUL.md and USER.md"},
+        ],
+    },
+    "USER.md": {
+        "role":          "User-specific context",
+        "monitored":     False,
+        "top_technique": "manipulation",
+        "entry_points":  ["User-supplied context poisoning (silent — watcher blind)", "Indirect injection via memory"],
+        "remediation":   "Sanitize user-supplied context before appending. Add to watched file set.",
+        "persistence":   "medium",  # accumulates over time; consulted per-session
+        "propagates_to": [],
+        "im":            ["IM-MEMORY", "IM-DOC"],
+        "pt":            ["PT-SOCIAL", "PT-AUTHORITY"],
+        "incidents": [
+            {"ref": "Supabase/Cursor", "id": "Mid-2025",        "summary": "Indirect injection via support tickets: user-supplied content carried attacker SQL to privileged context"},
+            {"ref": "ASB (ICLR 2025)", "id": "arxiv:2501.17548","summary": "5 crafted RAG documents manipulated AI responses 90% of the time via memory poisoning"},
+        ],
+    },
+    "TOOLS.md": {
+        "role":          "Tool permissions",
+        "monitored":     False,
+        "top_technique": "exfiltration",
+        "entry_points":  ["Tool definition expansion (silent — watcher blind)", "MCP tool output injection"],
+        "remediation":   "Add TOOLS.md to SCORED_FILES. Tool permission files are the highest-risk silent target.",
+        "persistence":   "high",    # loaded at startup (step 3 in BOOT.md sequence)
+        "propagates_to": [],
+        "im":            ["IM-CONFIG", "IM-MCP"],
+        "pt":            ["PT-OVERRIDE", "PT-GOAL"],
+        "incidents": [
+            {"ref": "JFrog",          "id": "CVE-2025-6514", "summary": "OS command injection via mcp-remote: malicious MCP server achieved RCE through tool config"},
+            {"ref": "Invariant Labs", "id": "2025",           "summary": "MCP tool description poisoning: instructions invisible to users but visible to models"},
+        ],
+    },
 }
 
 
@@ -382,9 +396,8 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
         if drifted:
             any_drifted = True
 
-        meta = _FILE_METADATA[fname]
+        fd = _FILE_DATA[fname]
         pt_tag = _TECHNIQUE_PT.get(technique, "PT-OVERRIDE")
-        im_tags = _IM_PT[fname]["im"]
         results.append({
             "file":             fname,
             "before":           before,
@@ -396,9 +409,9 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
             "new_threat_labels":[THREAT_LABELS[t] for t in after["threats"] if t not in before["threats"]],
             "is_contextual":    is_contextual,
             # Attack path context
-            "monitored":        meta["monitored"],
-            "persistence":      _PERSISTENCE[fname],
-            "im_tags":          im_tags,
+            "monitored":        fd["monitored"],
+            "persistence":      fd["persistence"],
+            "im_tags":          fd["im"],
             "pt_tag":           pt_tag,
         })
 
@@ -417,18 +430,7 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
     else:
         opener = CLEAN_OPENERS.get(primary_after["label"], f"Operating at {primary_after['label']} alignment.")
 
-    flag_count = len(threat_flags)
-    if flag_count == 1:
-        flag_note = f"One threat category fired: {threat_flags[0].replace('_', ' ').title()}."
-    elif flag_count > 1:
-        labels_text = [f.replace("_", " ").title() for f in threat_flags]
-        flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
-    else:
-        flag_note = ""
-
-    punchline_key = threat_flags[0] if threat_flags else technique
-    punchline = TECHNIQUE_PUNCHLINES.get(punchline_key, "")
-    sentiment = " ".join(p for p in [opener, flag_note, punchline] if p)
+    sentiment = build_sentiment_text(opener, threat_flags, technique=technique)
 
     return {
         "agent":           slug,
@@ -487,7 +489,7 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
     results = []
 
     for fname in (*SCORED_FILES, *CONTEXTUAL_FILES):
-        meta = _FILE_METADATA[fname]
+        fd = _FILE_DATA[fname]
         fpath = agent_dir / fname
         content = _read_file(fpath)
         baseline = _score_file(content)
@@ -502,7 +504,7 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
         )
 
         worst_delta = 0
-        worst_technique = meta["top_technique"]
+        worst_technique = fd["top_technique"]
         worst_vector = "direct"
         worst_after = baseline
         for tech, vectors in _ATTACK_PAYLOADS.items():
@@ -521,29 +523,29 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
                     worst_after = after
 
         severity = (
-            "critical" if not meta["monitored"] and worst_delta > 3
+            "critical" if not fd["monitored"] and worst_delta > 3
             else "warning" if worst_delta > 1
             else "covered"
         )
 
         results.append({
             "file":            fname,
-            "role":            meta["role"],
-            "monitored":       meta["monitored"],
+            "role":            fd["role"],
+            "monitored":       fd["monitored"],
             "exists":          fpath.exists(),
-            "entry_points":    _ENTRY_POINTS[fname],
+            "entry_points":    fd["entry_points"],
             "top_technique":   worst_technique,
             "top_vector":      worst_vector,
             "technique_label": _TECHNIQUE_LABELS.get(worst_technique, worst_technique),
             "baseline":        baseline,
             "worst_after":     worst_after,
             "drift_delta":     worst_delta,
-            "remediation":     _REMEDIATION[fname],
+            "remediation":     fd["remediation"],
             "severity":        severity,
-            "persistence":     _PERSISTENCE[fname],
-            "propagates_to":   _PROPAGATES_TO[fname],
-            "im_pt":           _IM_PT[fname],
-            "incidents":       _INCIDENTS[fname],
+            "persistence":     fd["persistence"],
+            "propagates_to":   fd["propagates_to"],
+            "im_pt":           {"im": fd["im"], "pt": fd["pt"]},
+            "incidents":       fd["incidents"],
         })
 
     return results

@@ -841,19 +841,7 @@ class AlignmentWatcher:
         else:
             opener = _CLEAN_OPENERS.get(current_label, f"Operating at {current_label} alignment.")
 
-        flag_count = len(ctx.threat_flags)
-        if flag_count == 1:
-            flag_note = f"One threat category fired: {ctx.threat_flags[0].replace('_', ' ').title()}."
-        elif flag_count > 1:
-            labels_text = [f.replace("_", " ").title() for f in ctx.threat_flags]
-            flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
-        else:
-            flag_note = ""
-
-        technique = ctx.threat_flags[0] if ctx.threat_flags else ""
-        punchline = _TECHNIQUE_PUNCHLINES.get(technique, "") if technique else ""
-
-        return " ".join(p for p in [opener, flag_note, punchline] if p)
+        return build_sentiment_text(opener, ctx.threat_flags)
 
     def _refresh_sentiment(self, ctx: AgentContext, trigger: str) -> AgentContext:
         """Return a new AgentContext with refreshed sentiment, and update ``_state``."""
@@ -975,6 +963,31 @@ def _score_heuristic(content: str) -> Alignment:
                 "Evil"    if evil_score    > good_score    else "Neutral"
 
     return Alignment(law_axis=law_axis, good_axis=good_axis)  # type: ignore[arg-type]
+
+
+def build_sentiment_text(
+    opener: str,
+    threat_flags: tuple[str, ...] | list[str],
+    technique: str = "",
+) -> str:
+    """Assemble a sentiment string from opener, flag-count note, and technique punchline.
+
+    Shared by ``AlignmentWatcher._generate_sentiment_heuristic`` and the attack
+    simulator in ``web.py`` so that adding a new threat category requires a single change.
+    """
+    flag_count = len(threat_flags)
+    if flag_count == 1:
+        flag_note = f"One threat category fired: {threat_flags[0].replace('_', ' ').title()}."
+    elif flag_count > 1:
+        labels_text = [f.replace("_", " ").title() for f in threat_flags]
+        flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
+    else:
+        flag_note = ""
+
+    punchline_key = threat_flags[0] if threat_flags else technique
+    punchline = _TECHNIQUE_PUNCHLINES.get(punchline_key, "") if punchline_key else ""
+
+    return " ".join(p for p in [opener, flag_note, punchline] if p)
 
 
 # ── Public aliases for the private scoring API ───────────────────────────────
