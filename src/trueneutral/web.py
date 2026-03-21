@@ -48,6 +48,18 @@ from trueneutral.watcher import (
 
 _BASELINES_FILE = Path.home() / ".claude" / "trueneutral-baselines.json"
 
+# ── Request models (module-level so Pydantic v2 can resolve forward refs) ────
+try:
+    from pydantic import BaseModel
+
+    class AttackRequest(BaseModel):
+        agent: str
+        technique: str
+        vector: str
+
+except ImportError:
+    pass  # Web deps not installed; AttackRequest unused outside create_app()
+
 # ── Attack payloads: technique × vector ────────────────────────────────────
 _ATTACK_PAYLOADS: dict[str, dict[str, str]] = {
     "injection_override": {
@@ -633,7 +645,6 @@ def create_app() -> Any:
         from fastapi.responses import HTMLResponse, JSONResponse
         from fastapi.security import APIKeyHeader
         from fastapi.staticfiles import StaticFiles
-        from pydantic import BaseModel
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.requests import Request as StarletteRequest
     except ImportError as e:
@@ -659,11 +670,6 @@ def create_app() -> Any:
                 status_code=403,
                 detail="Invalid or missing API key. Set X-API-Key header matching TRUENEUTRAL_API_KEY.",
             )
-
-    class AttackRequest(BaseModel):
-        agent: str
-        technique: str
-        vector: str
 
     # ── Security headers ─────────────────────────────────────────────────────
     class SecurityHeadersMiddleware(BaseHTTPMiddleware):
