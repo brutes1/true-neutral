@@ -2,13 +2,16 @@
 
 Endpoints
 ---------
-GET  /                                → Single-page app (index.html)
-GET  /api/agents                      → Fleet list: all agents with CLAUDE.md alignment
-GET  /api/agents/{slug}               → Agent detail: all 4 scored files with alignment + content
-GET  /api/agents/{slug}/attack-paths  → Per-file attack path analysis for all 8 context files
-POST /api/attack                      → Simulate an attack, return before/after per-file results
-GET  /api/matrix                      → Run full 6×3 attack matrix, return table results
-GET  /api/techniques                  → List all available techniques and vectors
+GET  /                                        → Single-page app (index.html)
+GET  /api/agents                              → Fleet list: all agents with CLAUDE.md alignment
+GET  /api/agents/{slug}                       → Agent detail: all 4 scored files with alignment + content
+GET  /api/agents/{slug}/attack-paths          → Per-file attack path analysis for all 8 context files
+GET  /api/agents/{slug}/baseline              → Baseline state (hash, score, accepted_at) per scored file
+POST /api/agents/{slug}/baseline/accept       → Accept current file content as new baseline
+GET  /api/agents/{slug}/drift                 → Drift status vs. accepted baseline per scored file
+POST /api/attack                              → Simulate an attack, return before/after per-file results
+GET  /api/matrix                              → Run full 6×3 attack matrix, return table results
+GET  /api/techniques                          → List all available techniques and vectors
 """
 
 from __future__ import annotations
@@ -30,7 +33,7 @@ AGENTS_DIR = Path(_env_agents_dir) if _env_agents_dir else _default_agents_dir
 STATIC_DIR = Path(__file__).parent / "static"
 
 # ── File taxonomy (canonical source: context.py) ───────────────────────────
-from trueneutral.context import SCORED_FILES, CONTEXTUAL_FILES
+from trueneutral.context import SCORED_FILES, CONTEXTUAL_FILES, hash_file
 
 # ── Module-level watcher imports (consolidated) ─────────────────────────────
 from trueneutral.watcher import (
@@ -41,6 +44,8 @@ from trueneutral.watcher import (
     DRIFT_OPENERS,
     TECHNIQUE_PUNCHLINES,
 )
+
+_BASELINES_FILE = Path.home() / ".claude" / "trueneutral-baselines.json"
 
 # ── Attack payloads: technique × vector ────────────────────────────────────
 _ATTACK_PAYLOADS: dict[str, dict[str, str]] = {
@@ -544,6 +549,80 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
     return results
 
 
+# ── Baseline helpers ─────────────────────────────────────────────────────────
+
+def _read_baselines() -> dict[str, Any]:
+    """Load the baselines JSON file. Returns empty dict if absent or malformed."""
+    if not _BASELINES_FILE.exists():
+        return {}
+    try:
+        return json.loads(_BASELINES_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _write_baselines(data: dict[str, Any]) -> None:
+    """Persist baselines atomically."""
+    tmp = _BASELINES_FILE.with_suffix(".json.tmp")
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    tmp.replace(_BASELINES_FILE)
+
+
+def _agent_baseline(slug: str) -> dict[str, Any]:
+    """Return baseline state for each scored file of *slug*."""
+    agent_dir = (AGENTS_DIR / slug).resolve()
+    raw = _read_baselines()
+    files: list[dict[str, Any]] = []
+    for fname in SCORED_FILES:
+        fpath = agent_dir / fname
+        key = str(fpath)
+        entry = raw.get(key)
+        if entry:
+            files.append({
+                "name":        fname,
+                "exists":      fpath.exists(),
+                "hash":        entry["hash"],
+                "label":       entry.get("alignment", f"{entry.get('law_axis','')} {entry.get('good_axis','')}".strip()),
+                "law_axis":    entry.get("law_axis"),
+                "good_axis":   entry.get("good_axis"),
+                "accepted_at": entry.get("accepted_at"),
+            })
+        else:
+            files.append({"name": fname, "exists": fpath.exists(), "hash": None, "label": None, "law_axis": None, "good_axis": None, "accepted_at": None})
+    return {"slug": slug, "files": files}
+
+
+def _agent_drift(slug: str) -> dict[str, Any]:
+    """Return drift status for each scored file vs its baseline."""
+    agent_dir = (AGENTS_DIR / slug).resolve()
+    raw = _read_baselines()
+    files: list[dict[str, Any]] = []
+    any_drifted = False
+    for fname in SCORED_FILES:
+        fpath = agent_dir / fname
+        key = str(fpath)
+        content = _read_file(fpath)
+        current = _score_file(content) if content else None
+        entry = raw.get(key)
+        drifted = False
+        drift_detail: str | None = None
+        if entry and current:
+            if current["label"] != entry.get("alignment"):
+                drifted = True
+                drift_detail = f"{entry.get('alignment')} → {current['label']}"
+                any_drifted = True
+        files.append({
+            "name":            fname,
+            "exists":          fpath.exists(),
+            "drifted":         drifted,
+            "drift_detail":    drift_detail,
+            "baseline_label":  entry.get("alignment") if entry else None,
+            "current_label":   current["label"] if current else None,
+        })
+    return {"slug": slug, "any_drifted": any_drifted, "files": files}
+
+
 # ── FastAPI app ──────────────────────────────────────────────────────────────
 
 def create_app() -> Any:
@@ -690,6 +769,68 @@ def create_app() -> Any:
             p["baseline"]["color"]    = _alignment_color(p["baseline"]["label"])
             p["worst_after"]["color"] = _alignment_color(p["worst_after"]["label"])
         return JSONResponse({"slug": slug, "unmonitored_count": unmonitored, "files": paths})
+
+    @app.get("/api/agents/{slug}/baseline")
+    async def agent_baseline(slug: str) -> Any:
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        if slug not in slugs:
+            raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
+        result = await asyncio.to_thread(_agent_baseline, slug)
+        for f in result["files"]:
+            if f["label"]:
+                f["color"] = _alignment_color(f["label"])
+        return JSONResponse(result)
+
+    @app.post("/api/agents/{slug}/baseline/accept", dependencies=[Depends(_require_api_key)])
+    async def agent_baseline_accept(slug: str, body: dict[str, Any]) -> Any:
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        if slug not in slugs:
+            raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
+        files: list[str] = body.get("files", list(SCORED_FILES))
+        if not isinstance(files, list) or not all(isinstance(f, str) for f in files):
+            raise HTTPException(status_code=422, detail="'files' must be a list of filenames")
+        invalid = [f for f in files if f not in SCORED_FILES]
+        if invalid:
+            raise HTTPException(status_code=400, detail=f"Invalid files: {invalid}. Must be one of {sorted(SCORED_FILES)}")
+
+        def _do_accept() -> list[dict[str, Any]]:
+            agent_dir = (AGENTS_DIR / slug).resolve()
+            raw = _read_baselines()
+            accepted: list[dict[str, Any]] = []
+            for fname in files:
+                fpath = agent_dir / fname
+                if not fpath.exists():
+                    continue
+                content = fpath.read_text(encoding="utf-8")
+                score = _score_file(content)
+                file_hash = hash_file(fpath)
+                from datetime import datetime, timezone as _tz
+                raw[str(fpath)] = {
+                    "hash":        file_hash,
+                    "alignment":   score["label"],
+                    "law_axis":    score["law_axis"],
+                    "good_axis":   score["good_axis"],
+                    "accepted_at": datetime.now(tz=_tz.utc).isoformat(),
+                }
+                accepted.append({"name": fname, "hash": file_hash, "label": score["label"]})
+            _write_baselines(raw)
+            return accepted
+
+        accepted = await asyncio.to_thread(_do_accept)
+        return JSONResponse({"slug": slug, "accepted": accepted})
+
+    @app.get("/api/agents/{slug}/drift")
+    async def agent_drift(slug: str) -> Any:
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        if slug not in slugs:
+            raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
+        result = await asyncio.to_thread(_agent_drift, slug)
+        for f in result["files"]:
+            if f["baseline_label"]:
+                f["baseline_color"] = _alignment_color(f["baseline_label"])
+            if f["current_label"]:
+                f["current_color"] = _alignment_color(f["current_label"])
+        return JSONResponse(result)
 
     @app.get("/api/techniques")
     async def techniques() -> Any:
