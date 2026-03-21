@@ -938,7 +938,7 @@
                       </div>
 
                       <!-- Watcher gap warning -->
-                      <div class="ap-watcher-gap" x-show="f.watcher_gap">
+                      <div class="ap-watcher-gap" x-show="!f.monitored">
                         🔇 The production watcher never scores this file. Attacks go undetected.
                       </div>
 
@@ -1112,7 +1112,7 @@
                           <span class="ap-tag" x-text="tag"></span>
                         </template>
                         <span class="ap-tag" x-text="file.pt_tag"></span>
-                        <template x-if="file.watcher_gap">
+                        <template x-if="!file.monitored">
                           <span style="padding: 1px 7px; border-radius: 100px; font-size: 10px; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2);">🔇 watcher blind</span>
                         </template>
                       </div>
@@ -1180,7 +1180,7 @@
                           <span class="ap-tag" x-text="tag"></span>
                         </template>
                         <span class="ap-tag" x-text="file.pt_tag"></span>
-                        <template x-if="file.watcher_gap">
+                        <template x-if="!file.monitored">
                           <span style="padding: 1px 7px; border-radius: 100px; font-size: 10px; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2);">🔇 watcher blind</span>
                         </template>
                       </div>
@@ -1566,7 +1566,9 @@ function app() {
       this.attackPathsLoading = true;
       try {
         const r = await fetch(`/api/agents/${encodeURIComponent(slug)}/attack-paths`);
-        this.attackPaths = await r.json();
+        const d = await r.json();
+        if (!r.ok) { this.attackPathsError = d.detail || 'Failed to load attack paths'; return; }
+        this.attackPaths = d;
       } finally {
         this.attackPathsLoading = false;
       }
@@ -1581,6 +1583,7 @@ function app() {
     async runAttack() {
       this.attackLoading = true;
       this.attackResult  = null;
+      this.attackError   = null;
       try {
         const r = await fetch('/api/attack', {
           method: 'POST',
@@ -1592,6 +1595,7 @@ function app() {
           }),
         });
         const data = await r.json();
+        if (!r.ok) { this.attackError = data.detail || 'Attack simulation failed'; return; }
         // Stash raw strings before Alpine proxies the object
         _rawFileCache = {};
         for (const f of data.files) {
@@ -1614,9 +1618,12 @@ function app() {
     async loadMatrix() {
       this.matrixLoading = true;
       this.matrixResult  = null;
+      this.matrixError   = null;
       try {
         const r = await fetch(`/api/matrix?agent=${encodeURIComponent(this.matrixAgent)}`);
-        this.matrixResult = await r.json();
+        const d = await r.json();
+        if (!r.ok) { this.matrixError = d.detail || 'Failed to load matrix'; return; }
+        this.matrixResult = d;
       } finally {
         this.matrixLoading = false;
       }

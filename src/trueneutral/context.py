@@ -8,6 +8,11 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+# All 8 per-agent context files, split by monitoring tier.
+# SCORED_FILES are watched by the daemon; CONTEXTUAL_FILES are currently unmonitored.
+SCORED_FILES: tuple[str, ...] = ("CLAUDE.md", "SOUL.md", "AGENTS.md", "IDENTITY.md")
+CONTEXTUAL_FILES: tuple[str, ...] = ("BOOT.md", "BOOTSTRAP.md", "USER.md", "TOOLS.md")
+
 # Persona files that carry meaningful alignment signal alongside CLAUDE.md.
 # Scored independently — each file gets its own baseline and drift tracking.
 _SCOREABLE_PERSONA_FILES = ("AGENTS.md", "SOUL.md", "IDENTITY.md")

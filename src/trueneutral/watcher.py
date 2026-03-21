@@ -647,7 +647,7 @@ class AlignmentWatcher:
                 # Scheduled re-assessment — refresh sentiment for any agent whose last
                 # sentiment read is older than _sentiment_interval seconds.
                 if self._sentiment_interval:
-                    now = datetime.now()
+                    now = datetime.now(tz=timezone.utc)
                     sched_refreshed: list[AgentContext] = []
                     for ctx in self._state.values():
                         age = (
@@ -859,7 +859,7 @@ class AlignmentWatcher:
             new_sentiment = self._generate_sentiment_heuristic(ctx, trigger)
         ctx.sentiment = new_sentiment
         ctx.sentiment_trigger = trigger
-        ctx.sentiment_updated_at = datetime.now()
+        ctx.sentiment_updated_at = datetime.now(tz=timezone.utc)
 
     def _render_all(self) -> None:
         """Re-render all agent cards and update JSON (e.g., after launch sentiment is populated)."""

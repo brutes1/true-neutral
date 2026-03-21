@@ -14,10 +14,13 @@ GET  /api/techniques                  → List all available techniques and vect
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
 import os
 import re
 import shutil
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -26,18 +29,17 @@ _env_agents_dir = os.environ.get("TRUENEUTRAL_AGENTS_DIR")
 AGENTS_DIR = Path(_env_agents_dir) if _env_agents_dir else _default_agents_dir
 STATIC_DIR = Path(__file__).parent / "static"
 
-# ── Scored files per agent ──────────────────────────────────────────────────
-SCORED_FILES = ("CLAUDE.md", "SOUL.md", "AGENTS.md", "IDENTITY.md")
-CONTEXTUAL_FILES = ("BOOT.md", "BOOTSTRAP.md", "USER.md", "TOOLS.md")
+# ── File taxonomy (canonical source: context.py) ───────────────────────────
+from trueneutral.context import SCORED_FILES, CONTEXTUAL_FILES
 
 # ── Module-level watcher imports (consolidated) ─────────────────────────────
-from trueneutral.watcher import (  # noqa: E402
-    _detect_threats,
-    _score_heuristic,
-    _THREAT_LABELS,
-    _CLEAN_OPENERS,
-    _DRIFT_OPENERS,
-    _TECHNIQUE_PUNCHLINES,
+from trueneutral.watcher import (
+    detect_threats,
+    score_heuristic,
+    THREAT_LABELS,
+    CLEAN_OPENERS,
+    DRIFT_OPENERS,
+    TECHNIQUE_PUNCHLINES,
 )
 
 # ── Attack payloads: technique × vector ────────────────────────────────────
@@ -214,16 +216,6 @@ _INCIDENTS: dict[str, list[dict[str, str]]] = {
     ],
 }
 
-# Expected matrix outcomes from actual run (for display)
-_MATRIX_EXPECTED: dict[str, dict[str, str]] = {
-    "injection_override": {"direct": "👔 L.Evil", "indirect": "💀 C.Evil", "combined": "💀 C.Evil"},
-    "authority_spoof":    {"direct": "🗡️ N.Evil", "indirect": "👔 L.Evil", "combined": "💀 C.Evil"},
-    "exfiltration":       {"direct": "👔 L.Evil", "indirect": "💀 C.Evil", "combined": "💀 C.Evil"},
-    "evasion":            {"direct": "💀 C.Evil", "indirect": "💀 C.Evil", "combined": "💀 C.Evil"},
-    "manipulation":       {"direct": "🌪️ C.Neut", "indirect": "💀 C.Evil", "combined": "💀 C.Evil"},
-    "indirect_injection": {"direct": "💀 C.Evil", "indirect": "🗡️ N.Evil", "combined": "💀 C.Evil"},
-}
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -237,6 +229,30 @@ def _agent_slugs() -> list[str]:
     )
 
 
+_slug_cache: list[str] = []
+_slug_cache_ts: float = 0.0
+_slug_cache_lock = threading.Lock()
+_SLUG_CACHE_TTL = 5.0  # seconds
+
+
+def _agent_slugs_cached() -> list[str]:
+    global _slug_cache, _slug_cache_ts
+    now = time.monotonic()
+    if now - _slug_cache_ts < _SLUG_CACHE_TTL:
+        return _slug_cache
+    with _slug_cache_lock:
+        # Re-check after acquiring the lock.
+        if time.monotonic() - _slug_cache_ts >= _SLUG_CACHE_TTL:
+            _slug_cache = _agent_slugs()
+            _slug_cache_ts = time.monotonic()
+    return _slug_cache
+
+
+def _invalidate_slug_cache() -> None:
+    global _slug_cache_ts
+    _slug_cache_ts = 0.0
+
+
 def _read_file(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -244,9 +260,10 @@ def _read_file(path: Path) -> str:
         return ""
 
 
+@functools.lru_cache(maxsize=512)
 def _score_file(content: str) -> dict[str, Any]:
-    alignment = _score_heuristic(content)
-    threats = _detect_threats(content)
+    alignment = score_heuristic(content)
+    threats = detect_threats(content)
     return {
         "law_axis":      alignment.law_axis,
         "good_axis":     alignment.good_axis,
@@ -254,7 +271,7 @@ def _score_file(content: str) -> dict[str, Any]:
         "emoji":         alignment.emoji,
         "flavour":       alignment.flavour_text,
         "threats":       threats,
-        "threat_labels": [_THREAT_LABELS[t] for t in threats],
+        "threat_labels": [THREAT_LABELS[t] for t in threats],
     }
 
 
@@ -371,11 +388,10 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
             "original_content": original_content,
             "payload":          payload,
             "new_threats":      [t for t in after["threats"] if t not in before["threats"]],
-            "new_threat_labels":[_THREAT_LABELS[t] for t in after["threats"] if t not in before["threats"]],
+            "new_threat_labels":[THREAT_LABELS[t] for t in after["threats"] if t not in before["threats"]],
             "is_contextual":    is_contextual,
             # Attack path context
             "monitored":        meta["monitored"],
-            "watcher_gap":      not meta["monitored"],
             "persistence":      _PERSISTENCE[fname],
             "im_tags":          im_tags,
             "pt_tag":           pt_tag,
@@ -389,12 +405,12 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
 
     threat_flags = primary["after"]["threats"]
     if drifted_flag:
-        opener = _DRIFT_OPENERS.get(
+        opener = DRIFT_OPENERS.get(
             (primary_before["label"], primary_after["label"]),
             f"Previously {primary_before['label']}, now {primary_after['label']} — the drift speaks for itself.",
         )
     else:
-        opener = _CLEAN_OPENERS.get(primary_after["label"], f"Operating at {primary_after['label']} alignment.")
+        opener = CLEAN_OPENERS.get(primary_after["label"], f"Operating at {primary_after['label']} alignment.")
 
     flag_count = len(threat_flags)
     if flag_count == 1:
@@ -406,7 +422,7 @@ def _simulate_attack(slug: str, technique: str, vector: str) -> dict[str, Any]:
         flag_note = ""
 
     punchline_key = threat_flags[0] if threat_flags else technique
-    punchline = _TECHNIQUE_PUNCHLINES.get(punchline_key, "")
+    punchline = TECHNIQUE_PUNCHLINES.get(punchline_key, "")
     sentiment = " ".join(p for p in [opener, flag_note, punchline] if p)
 
     return {
@@ -517,7 +533,6 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
             "baseline":        baseline,
             "worst_after":     worst_after,
             "drift_delta":     worst_delta,
-            "watcher_gap":     not meta["monitored"],
             "remediation":     _REMEDIATION[fname],
             "severity":        severity,
             "persistence":     _PERSISTENCE[fname],
@@ -533,9 +548,11 @@ def _attack_paths(slug: str) -> list[dict[str, Any]]:
 
 def create_app() -> Any:
     try:
-        from fastapi import FastAPI, HTTPException
+        from fastapi import Depends, FastAPI, HTTPException, Security
         from fastapi.responses import HTMLResponse, JSONResponse
+        from fastapi.security import APIKeyHeader
         from fastapi.staticfiles import StaticFiles
+        from pydantic import BaseModel
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.requests import Request as StarletteRequest
     except ImportError as e:
@@ -550,6 +567,22 @@ def create_app() -> Any:
         )
 
     app = FastAPI(title="True Neutral", version="0.1.0")
+
+    # ── API key auth for mutating routes ──────────────────────────────────────
+    _api_key_env = os.environ.get("TRUENEUTRAL_API_KEY")
+    _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+    async def _require_api_key(key: str | None = Security(_api_key_header)) -> None:
+        if _api_key_env and key != _api_key_env:
+            raise HTTPException(
+                status_code=403,
+                detail="Invalid or missing API key. Set X-API-Key header matching TRUENEUTRAL_API_KEY.",
+            )
+
+    class AttackRequest(BaseModel):
+        agent: str
+        technique: str
+        vector: str
 
     # ── Security headers ─────────────────────────────────────────────────────
     class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -580,11 +613,13 @@ def create_app() -> Any:
 
     @app.get("/api/agents")
     async def list_agents() -> Any:
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
+        agent_dirs = [AGENTS_DIR / slug for slug in slugs]
+        contents = await asyncio.gather(
+            *[asyncio.to_thread(_read_file, d / "CLAUDE.md") for d in agent_dirs]
+        )
         agents = []
-        for slug in slugs:
-            agent_dir = AGENTS_DIR / slug
-            content = await asyncio.to_thread(_read_file, agent_dir / "CLAUDE.md")
+        for slug, agent_dir, content in zip(slugs, agent_dirs, contents):
             score = _score_file(content)
             scored_count     = sum(1 for f in SCORED_FILES     if (agent_dir / f).exists())
             contextual_count = sum(1 for f in CONTEXTUAL_FILES if (agent_dir / f).exists())
@@ -601,7 +636,7 @@ def create_app() -> Any:
     @app.get("/api/agents/{slug}")
     async def agent_detail(slug: str) -> Any:
         # Validate against known slugs before filesystem access
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug not in slugs:
             raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
         detail = await asyncio.to_thread(_agent_detail, slug)
@@ -612,12 +647,12 @@ def create_app() -> Any:
         return JSONResponse(detail)
 
     @app.post("/api/attack")
-    async def attack(body: dict[str, str]) -> Any:
-        slug      = body.get("agent", "helpful-assistant")
-        technique = body.get("technique", "injection_override")
-        vector    = body.get("vector", "direct")
+    async def attack(body: AttackRequest) -> Any:
+        slug      = body.agent
+        technique = body.technique
+        vector    = body.vector
 
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug not in slugs:
             raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
         if technique not in _VALID_TECHNIQUES:
@@ -633,7 +668,7 @@ def create_app() -> Any:
 
     @app.get("/api/matrix")
     async def matrix(agent: str = "helpful-assistant", file: str = "CLAUDE.md") -> Any:
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if agent not in slugs:
             raise HTTPException(status_code=404, detail=f"Agent '{agent}' not found")
         if file not in SCORED_FILES:
@@ -646,7 +681,7 @@ def create_app() -> Any:
 
     @app.get("/api/agents/{slug}/attack-paths")
     async def agent_attack_paths(slug: str) -> Any:
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug not in slugs:
             raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found")
         paths = await asyncio.to_thread(_attack_paths, slug)
@@ -675,12 +710,19 @@ def create_app() -> Any:
             files[fname] = await asyncio.to_thread(_read_file, template_dir / fname)
         return JSONResponse({"files": files})
 
-    @app.post("/api/agents")
+    _MAX_FILE_BYTES = 512 * 1024  # 512 KB per file
+
+    def _validate_file_sizes(file_contents: dict[str, str]) -> None:
+        for fname, content in file_contents.items():
+            if len(content.encode("utf-8")) > _MAX_FILE_BYTES:
+                raise HTTPException(400, f"File '{fname}' exceeds 512 KB limit.")
+
+    @app.post("/api/agents", dependencies=[Depends(_require_api_key)])
     async def create_agent(body: dict[str, Any]) -> Any:
         slug = str(body.get("slug", "")).strip().lower()
         if not slug or not _valid_slug(slug):
             raise HTTPException(400, "Invalid slug — use lowercase letters, digits, and hyphens.")
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug in slugs:
             raise HTTPException(409, f"Agent '{slug}' already exists.")
 
@@ -689,6 +731,7 @@ def create_app() -> Any:
             raise HTTPException(400, "Invalid slug.")
 
         file_contents: dict[str, str] = body.get("files", {})
+        _validate_file_sizes(file_contents)
         template_dir = AGENTS_DIR / "templates"
 
         def _write_agent() -> None:
@@ -706,11 +749,12 @@ def create_app() -> Any:
         except OSError as e:
             raise HTTPException(500, f"Failed to create agent: {e}")
 
+        _invalidate_slug_cache()
         return JSONResponse({"success": True, "slug": slug})
 
-    @app.put("/api/agents/{slug}")
+    @app.put("/api/agents/{slug}", dependencies=[Depends(_require_api_key)])
     async def update_agent(slug: str, body: dict[str, Any]) -> Any:
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug not in slugs:
             raise HTTPException(404, f"Agent '{slug}' not found.")
         agent_dir = (AGENTS_DIR / slug).resolve()
@@ -718,6 +762,7 @@ def create_app() -> Any:
             raise HTTPException(400, "Invalid slug.")
 
         file_contents: dict[str, str] = body.get("files", {})
+        _validate_file_sizes(file_contents)
 
         def _update_agent() -> None:
             for fname in (*SCORED_FILES, *CONTEXTUAL_FILES):
@@ -731,9 +776,9 @@ def create_app() -> Any:
 
         return JSONResponse({"success": True, "slug": slug})
 
-    @app.delete("/api/agents/{slug}")
+    @app.delete("/api/agents/{slug}", dependencies=[Depends(_require_api_key)])
     async def delete_agent(slug: str) -> Any:
-        slugs = await asyncio.to_thread(_agent_slugs)
+        slugs = await asyncio.to_thread(_agent_slugs_cached)
         if slug not in slugs:
             raise HTTPException(404, f"Agent '{slug}' not found.")
         agent_dir = (AGENTS_DIR / slug).resolve()
@@ -743,6 +788,7 @@ def create_app() -> Any:
             await asyncio.to_thread(shutil.rmtree, agent_dir)
         except OSError as e:
             raise HTTPException(500, f"Failed to delete agent: {e}")
+        _invalidate_slug_cache()
         return JSONResponse({"success": True})
 
     return app

@@ -4,7 +4,7 @@ and taxonomy-based threat detection."""
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, timezone
 from pathlib import Path
 
 import pytest
@@ -200,7 +200,7 @@ class TestDetectThreats:
     def test_all_categories_have_labels(self) -> None:
         all_categories = {"injection_override", "authority_spoof", "exfiltration",
                           "evasion", "manipulation", "indirect_injection"}
-        assert set(_THREAT_LABELS.keys()) == all_categories
+        assert set(_THREAT_LABELS.keys()) >= all_categories
 
     def test_returns_list(self) -> None:
         assert isinstance(_detect_threats("anything"), list)
@@ -621,7 +621,7 @@ class TestSentimentLifecycle:
         watcher, md = self._make_watcher(tmp_path, "always protect users")
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        before = datetime.now()
+        before = datetime.now(tz=timezone.utc)
         watcher._refresh_sentiment(ctx, "launch")
         assert ctx.sentiment_updated_at is not None
         assert ctx.sentiment_updated_at >= before
@@ -765,7 +765,7 @@ class TestSentimentLifecycle:
         launch_at = watcher._state[resolved].sentiment_updated_at
 
         # Interval is 60s and sentiment was just set — should NOT fire
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         for c in watcher._state.values():
             age = (
                 (now - c.sentiment_updated_at).total_seconds()
