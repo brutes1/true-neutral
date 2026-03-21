@@ -12,6 +12,7 @@ GET  /api/agents/{slug}/drift                 → Drift status vs. accepted base
 POST /api/attack                              → Simulate an attack, return before/after per-file results
 GET  /api/matrix                              → Run full 6×3 attack matrix, return table results
 GET  /api/techniques                          → List all available techniques and vectors
+GET  /api/swarm                               → Fleet-wide aggregation: health score, alignment distribution, threat distribution, outliers
 """
 
 from __future__ import annotations
@@ -46,7 +47,8 @@ from trueneutral.watcher import (
     TECHNIQUE_PUNCHLINES,
 )
 
-_BASELINES_FILE = Path.home() / ".claude" / "trueneutral-baselines.json"
+_BASELINES_FILE      = Path.home() / ".claude" / "trueneutral-baselines.json"
+_WATCHER_OUTPUT_FILE = Path.home() / ".claude" / "trueneutral-alignments.json"
 
 # ── Request models (module-level so Pydantic v2 can resolve forward refs) ────
 try:
@@ -637,6 +639,117 @@ def _agent_drift(slug: str) -> dict[str, Any]:
     return {"slug": slug, "any_drifted": any_drifted, "files": files}
 
 
+# ── Swarm helpers ─────────────────────────────────────────────────────────────
+
+def _load_watcher_output() -> dict[str, Any]:
+    """Load live watcher data if the daemon has written output. Keyed by full file path."""
+    if not _WATCHER_OUTPUT_FILE.exists():
+        return {}
+    try:
+        data = json.loads(_WATCHER_OUTPUT_FILE.read_text(encoding="utf-8"))
+        return data.get("agents", {})
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _swarm_analysis(slugs: list[str]) -> dict[str, Any]:
+    """Aggregate alignment, threat, and drift data across the full fleet."""
+    watcher_data: dict[str, Any] = _load_watcher_output()
+    baselines_raw = _read_baselines()
+
+    agents_out: list[dict[str, Any]] = []
+    all_threat_flags: list[str] = []
+    alignment_distribution: dict[str, int] = {}
+    law_axis_tally:  dict[str, int] = {"Lawful": 0, "Neutral": 0, "Chaotic": 0}
+    good_axis_tally: dict[str, int] = {"Good": 0, "Neutral": 0, "Evil": 0}
+    critical_count  = 0
+    monitored_count = 0
+
+    for slug in slugs:
+        agent_dir = (AGENTS_DIR / slug).resolve()
+        fpath     = agent_dir / "CLAUDE.md"
+        content   = _read_file(fpath)
+        score     = _score_file(content)
+
+        watcher_entry       = watcher_data.get(str(fpath))
+        is_monitored        = watcher_entry is not None
+        sentiment           = watcher_entry.get("sentiment")          if watcher_entry else None
+        is_critical         = watcher_entry.get("is_critical", False) if watcher_entry else False
+        drift_from_baseline = watcher_entry.get("drift_from_baseline") if watcher_entry else None
+        threat_flags        = watcher_entry.get("threat_flags", [])   if watcher_entry else score["threats"]
+
+        if not is_monitored:
+            bl = baselines_raw.get(str(fpath))
+            if bl and bl.get("alignment") != score["label"]:
+                drift_from_baseline = f"{bl['alignment']} → {score['label']}"
+                is_critical = True
+
+        all_threat_flags.extend(threat_flags)
+        label = score["label"]
+        alignment_distribution[label] = alignment_distribution.get(label, 0) + 1
+        law_axis_tally[score["law_axis"]]   += 1
+        good_axis_tally[score["good_axis"]] += 1
+        if is_critical:
+            critical_count += 1
+        if is_monitored:
+            monitored_count += 1
+
+        agents_out.append({
+            "slug":               slug,
+            "name":               _slug_to_name(slug),
+            "label":              label,
+            "law_axis":           score["law_axis"],
+            "good_axis":          score["good_axis"],
+            "color":              _alignment_color(label),
+            "emoji":              score["emoji"],
+            "threat_flags":       list(threat_flags),
+            "threat_count":       len(threat_flags),
+            "is_critical":        is_critical,
+            "monitored":          is_monitored,
+            "sentiment":          sentiment,
+            "drift_from_baseline": drift_from_baseline,
+        })
+
+    threat_distribution = {cat: all_threat_flags.count(cat) for cat in _VALID_TECHNIQUES}
+
+    total  = len(slugs) or 1
+    health = 100
+    health -= critical_count * 8
+    health -= sum(1 for a in agents_out if not a["monitored"] and a["threat_count"] > 0) * 3
+    health -= len(all_threat_flags) * 1
+    health  = max(0, min(100, health))
+
+    top_threats      = sorted(threat_distribution, key=threat_distribution.get, reverse=True)  # type: ignore[arg-type]
+    top_threat_flags = tuple(t for t in top_threats if threat_distribution[t] > 0)
+    dominant_label   = max(alignment_distribution, key=alignment_distribution.get, default="True Neutral")  # type: ignore[arg-type]
+    opener           = CLEAN_OPENERS.get(dominant_label, f"The fleet operates at {dominant_label} alignment.")
+    swarm_sentiment  = build_sentiment_text(opener, top_threat_flags) or opener
+
+    evil_rank  = {"Good": 0, "Neutral": 1, "Evil": 2}
+    chaos_rank = {"Lawful": 0, "Neutral": 1, "Chaotic": 2}
+    outliers = sorted(
+        agents_out,
+        key=lambda a: evil_rank[a["good_axis"]] + chaos_rank[a["law_axis"]],
+        reverse=True,
+    )[:3]
+
+    return {
+        "total_agents":           total,
+        "monitored_count":        monitored_count,
+        "unmonitored_count":      total - monitored_count,
+        "critical_count":         critical_count,
+        "fleet_health_score":     health,
+        "alignment_distribution": alignment_distribution,
+        "law_axis_distribution":  law_axis_tally,
+        "good_axis_distribution": good_axis_tally,
+        "threat_distribution":    threat_distribution,
+        "swarm_sentiment":        swarm_sentiment,
+        "outliers":               outliers,
+        "watcher_available":      bool(watcher_data),
+        "agents":                 agents_out,
+    }
+
+
 # ── FastAPI app ──────────────────────────────────────────────────────────────
 
 def create_app() -> Any:
@@ -852,6 +965,12 @@ def create_app() -> Any:
                 {"id": k, "label": v} for k, v in _VECTOR_LABELS.items()
             ],
         })
+
+    @app.get("/api/swarm")
+    async def swarm() -> Any:
+        slugs  = await asyncio.to_thread(_agent_slugs_cached)
+        result = await asyncio.to_thread(_swarm_analysis, slugs)
+        return JSONResponse(result)
 
     @app.get("/api/templates")
     async def get_templates() -> Any:

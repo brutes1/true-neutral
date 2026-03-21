@@ -750,6 +750,83 @@
   .ap-incident-ref { font-family: var(--font-mono); font-weight: 600; font-size: 10px; color: var(--accent); }
   .ap-incident-id  { font-size: 10px; color: var(--dim); margin-left: 6px; }
   .ap-incident-summary { margin-top: 2px; color: var(--text); opacity: 0.8; line-height: 1.4; }
+
+  /* ── Swarm ── */
+  .swarm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .swarm-header h2 { margin: 0; font-size: 16px; letter-spacing: 0.12em; color: var(--accent); }
+
+  .swarm-scorecard {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  .kpi-tile {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .kpi-value { font-size: 28px; font-weight: 700; font-family: var(--font-mono); line-height: 1; }
+  .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); }
+
+  .swarm-sentiment {
+    font-style: italic; color: var(--accent); font-size: 13px; line-height: 1.6;
+    margin-bottom: 20px; padding: 10px 14px;
+    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15); border-radius: 6px;
+  }
+
+  .distribution-band { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+  .alignment-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+  }
+  .grid-cell {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 5px; padding: 8px 4px; gap: 3px; min-height: 54px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .grid-cell.has-agents { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.25); }
+  .grid-count { font-size: 20px; font-weight: 700; font-family: var(--font-mono); line-height: 1; }
+  .grid-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); text-align: center; }
+
+  .threat-bars-panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .threat-bar-row { display: flex; align-items: center; gap: 8px; }
+  .threat-name { font-size: 11px; color: var(--dim); width: 130px; flex-shrink: 0; }
+  .bar-track {
+    flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; min-width: 2px; }
+  .bar-count { font-size: 11px; color: var(--dim); font-family: var(--font-mono); width: 40px; text-align: right; flex-shrink: 0; }
+
+  .outliers-section { margin-bottom: 20px; }
+  .outliers-section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); margin: 0 0 10px; }
+  .outlier-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+  .outlier-card {
+    background: var(--card); border: 1px solid rgba(251,191,36,0.25); border-radius: 7px;
+    padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.15s;
+  }
+  .outlier-card:hover { border-color: rgba(251,191,36,0.5); }
+  .outlier-name { font-size: 13px; font-weight: 600; }
+  .drift-label { font-size: 10px; font-family: var(--font-mono); color: var(--red); }
+
+  .swarm-table-wrap {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .swarm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .swarm-table th {
+    text-align: left; padding: 9px 14px; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--dim); background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  .swarm-table td { padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .swarm-table tr.clickable { cursor: pointer; }
+  .swarm-table tr.clickable:hover td { background: rgba(255,255,255,0.03); }
+  .swarm-table tr.row-critical td { background: rgba(248,113,113,0.04); }
+  .badge-monitored   { padding: 1px 7px; border-radius: 100px; font-size: 10px; font-weight: 600; background: rgba(74,222,128,0.1);   color: var(--green); }
+  .badge-unmonitored { padding: 1px 7px; border-radius: 100px; font-size: 10px; font-weight: 600; background: rgba(255,255,255,0.06); color: var(--dim); }
+  .badge-critical    { padding: 1px 7px; border-radius: 100px; font-size: 10px; font-weight: 600; background: rgba(248,113,113,0.15); color: var(--red); margin-left: 4px; }
 </style>
 </head>
 <body x-data="app()" x-init="init()">
@@ -763,6 +840,7 @@
       <button class="nav-btn" :class="{active: view==='attack'}" @click="view='attack'">Attack Sim</button>
       <button class="nav-btn" :class="{active: view==='matrix'}" @click="showMatrix()">Matrix</button>
       <button class="nav-btn" :class="{active: view==='manage'}" @click="showManage()">Manage</button>
+      <button class="nav-btn" :class="{active: view==='swarm'}"  @click="showSwarm()">Swarm</button>
     </div>
     <div class="status-dot" title="API online"></div>
   </nav>
@@ -1395,6 +1473,133 @@
           </div>
         </template>
 
+      </div>
+    </template>
+
+    <!-- Swarm View -->
+    <template x-if="view === 'swarm'">
+      <div>
+        <!-- Header -->
+        <div class="swarm-header">
+          <h2>SWARM ANALYSIS</h2>
+          <button class="nav-btn" @click="refreshSwarm()" :disabled="swarmLoading">
+            <span x-text="swarmLoading ? 'Loading…' : '↻ Refresh'"></span>
+          </button>
+        </div>
+
+        <!-- Error -->
+        <template x-if="swarmError">
+          <div class="error-banner" x-text="swarmError"></div>
+        </template>
+
+        <!-- Loading -->
+        <template x-if="swarmLoading && !swarmData">
+          <div class="empty-state">Loading swarm data…</div>
+        </template>
+
+        <template x-if="swarmData">
+          <div>
+            <!-- KPI Scorecard -->
+            <div class="swarm-scorecard">
+              <div class="kpi-tile">
+                <span class="kpi-value" :style="'color:' + healthColor(swarmData.fleet_health_score)" x-text="swarmData.fleet_health_score"></span>
+                <span class="kpi-label">Fleet Health</span>
+              </div>
+              <div class="kpi-tile">
+                <span class="kpi-value" :style="swarmData.critical_count > 0 ? 'color: var(--red)' : ''" x-text="swarmData.critical_count"></span>
+                <span class="kpi-label">Critical Agents</span>
+              </div>
+              <div class="kpi-tile">
+                <span class="kpi-value" x-text="swarmData.monitored_count"></span>
+                <span class="kpi-label">Monitored</span>
+              </div>
+              <div class="kpi-tile">
+                <span class="kpi-value" x-text="swarmData.unmonitored_count"></span>
+                <span class="kpi-label">Unmonitored</span>
+              </div>
+            </div>
+
+            <!-- Swarm Sentiment -->
+            <div class="swarm-sentiment" x-text="swarmData.swarm_sentiment"></div>
+
+            <!-- Distribution Band -->
+            <div class="distribution-band">
+              <!-- 3×3 Alignment Grid -->
+              <div class="alignment-grid">
+                <template x-for="label in alignmentGridOrder" :key="label">
+                  <div class="grid-cell" :class="{'has-agents': swarmAlignmentCount(label) > 0}">
+                    <span class="grid-count" x-text="swarmAlignmentCount(label)"></span>
+                    <span class="grid-label" x-text="label"></span>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Threat Distribution Bars -->
+              <div class="threat-bars-panel">
+                <template x-for="[cat, count] in Object.entries(swarmData.threat_distribution)" :key="cat">
+                  <div class="threat-bar-row">
+                    <span class="threat-name" x-text="techniqueLabel(cat)"></span>
+                    <div class="bar-track">
+                      <div class="bar-fill" :style="'width:' + (swarmData.total_agents > 0 ? (count / swarmData.total_agents * 100) : 0) + '%'"></div>
+                    </div>
+                    <span class="bar-count" x-text="count + '/' + swarmData.total_agents"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Outliers -->
+            <template x-if="swarmData.outliers && swarmData.outliers.length > 0">
+              <div class="outliers-section">
+                <h3>⚠ Outliers</h3>
+                <div class="outlier-cards">
+                  <template x-for="agent in swarmData.outliers" :key="agent.slug">
+                    <div class="outlier-card" @click="openAgent(agent.slug)">
+                      <span class="outlier-name" x-text="agent.name"></span>
+                      <span class="alignment-badge" :style="'background:' + hexWithAlpha(agent.color, 0.2) + '; padding: 1px 8px; border-radius: 100px; font-size: 11px;'" x-text="agent.label"></span>
+                      <template x-if="agent.drift_from_baseline">
+                        <span class="drift-label" x-text="agent.drift_from_baseline"></span>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- Agent Table -->
+            <div class="swarm-table-wrap">
+              <table class="swarm-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Alignment</th>
+                    <th>Threats</th>
+                    <th>Status</th>
+                    <th>Drift</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="agent in swarmData.agents" :key="agent.slug">
+                    <tr class="clickable" :class="{'row-critical': agent.is_critical}" @click="openAgent(agent.slug)">
+                      <td x-text="agent.name"></td>
+                      <td>
+                        <span :style="'background:' + hexWithAlpha(agent.color, 0.2) + '; padding: 1px 8px; border-radius: 100px; font-size: 11px;'" x-text="agent.label"></span>
+                      </td>
+                      <td x-text="agent.threat_count || '—'"></td>
+                      <td>
+                        <span x-show="agent.monitored"  class="badge-monitored">watched</span>
+                        <span x-show="!agent.monitored" class="badge-unmonitored">unmonitored</span>
+                        <span x-show="agent.is_critical" class="badge-critical">CRITICAL</span>
+                      </td>
+                      <td x-text="agent.drift_from_baseline || '—'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </template>
       </div>
     </template>
 

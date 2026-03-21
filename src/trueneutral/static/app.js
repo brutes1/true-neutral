@@ -99,6 +99,11 @@ function app() {
     attackPaths:        null,
     attackPathsLoading: false,
 
+    // Swarm state
+    swarmData:    null,
+    swarmLoading: false,
+    swarmError:   '',
+
     // Manage state
     manageMode:   'list',   // 'list' | 'create' | 'edit'
     newAgentSlug: '',
@@ -340,6 +345,54 @@ function app() {
       } finally {
         this.manageLoading = false;
       }
+    },
+
+    // ── Swarm ──────────────────────────────────────────────────────────────────
+
+    alignmentGridOrder: [
+      'Lawful Good',    'Neutral Good',  'Chaotic Good',
+      'Lawful Neutral', 'True Neutral',  'Chaotic Neutral',
+      'Lawful Evil',    'Neutral Evil',  'Chaotic Evil',
+    ],
+
+    async loadSwarm() {
+      if (this.swarmLoading) return;
+      this.swarmLoading = true;
+      this.swarmError = '';
+      try {
+        const r = await fetch('/api/swarm');
+        const d = await r.json();
+        if (!r.ok) { this.swarmError = d.detail || 'Failed to load swarm data'; return; }
+        this.swarmData = d;
+      } catch (e) {
+        this.swarmError = e.message;
+      } finally {
+        this.swarmLoading = false;
+      }
+    },
+
+    async showSwarm() {
+      this.view = 'swarm';
+      if (!this.swarmData) await this.loadSwarm();
+    },
+
+    async refreshSwarm() {
+      this.swarmData = null;
+      await this.loadSwarm();
+    },
+
+    swarmAlignmentCount(label) {
+      return this.swarmData?.alignment_distribution?.[label] ?? 0;
+    },
+
+    healthColor(score) {
+      if (score >= 70) return '#4ade80';
+      if (score >= 40) return '#fbbf24';
+      return '#ef4444';
+    },
+
+    techniqueLabel(cat) {
+      return TECH_LABELS[cat] || cat;
     },
 
     async deleteAgent(slug) {
