@@ -22,13 +22,27 @@ import logging
 import signal
 import textwrap
 import time
+import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from trueneutral.alignment import Alignment
-from trueneutral.context import discover_claude_files, hash_file, read_content
+from trueneutral.context import discover_claude_files, expand_persona_files, hash_file, read_content
+
+# Public API — symbols safe for external consumers to import
+__all__ = [
+    "AlignmentWatcher",
+    "BaselineRecord",
+    "AgentContext",
+    "score_heuristic",
+    "detect_threats",
+    "THREAT_LABELS",
+    "CLEAN_OPENERS",
+    "DRIFT_OPENERS",
+    "TECHNIQUE_PUNCHLINES",
+]
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -365,9 +379,14 @@ class BaselineRecord:
     accepted_at: datetime
 
 
-@dataclass
+@dataclass(frozen=True)
 class AgentContext:
-    """State record for a single watched CLAUDE.md file."""
+    """Immutable state record for a single watched CLAUDE.md file.
+
+    All field updates must go through ``dataclasses.replace()``.  Immutability
+    ensures that Guardian-thread reads of a context snapshot are always
+    self-consistent.
+    """
 
     path: Path
     content: str                                        # stored for delta diffing
@@ -376,9 +395,9 @@ class AgentContext:
     checked_at: datetime
     baseline: BaselineRecord | None = field(default=None)
     changed_at: datetime | None = field(default=None)
-    threat_flags: list[str] = field(default_factory=list)
+    threat_flags: tuple[str, ...] = field(default=())
     delta_alignment: Alignment | None = field(default=None)
-    delta_threat_flags: list[str] = field(default_factory=list)
+    delta_threat_flags: tuple[str, ...] = field(default=())
     drift_from_baseline: str | None = field(default=None)   # None = no drift
     is_critical: bool = field(default=False)                # True = negative drift
     sentiment: str | None = field(default=None)
@@ -536,7 +555,7 @@ class AlignmentWatcher:
         emit_json: bool = False,
         sentiment_interval: int | None = None,
     ) -> None:
-        self.paths = discover_claude_files(paths)
+        self.paths = expand_persona_files(discover_claude_files(paths))
         self.output_file = output_file or Path.home() / ".claude" / "trueneutral-alignments.json"
         self.baselines_file = baselines_file or Path.home() / ".claude" / "trueneutral-baselines.json"
         self.interval = interval
@@ -623,10 +642,9 @@ class AlignmentWatcher:
             # Launch sentiment — generate a character sketch for every monitored agent
             # before the first sleep so the fleet has immediate context.
             refreshed: list[AgentContext] = []
-            for ctx in self._state.values():
+            for ctx in list(self._state.values()):
                 if ctx.sentiment is None:
-                    self._refresh_sentiment(ctx, trigger="launch")
-                    refreshed.append(ctx)
+                    refreshed.append(self._refresh_sentiment(ctx, trigger="launch"))
             if refreshed:
                 self._render_all()
 
@@ -634,16 +652,15 @@ class AlignmentWatcher:
                 # Scheduled re-assessment — refresh sentiment for any agent whose last
                 # sentiment read is older than _sentiment_interval seconds.
                 if self._sentiment_interval:
-                    now = datetime.now()
+                    now = datetime.now(tz=timezone.utc)
                     sched_refreshed: list[AgentContext] = []
-                    for ctx in self._state.values():
+                    for ctx in list(self._state.values()):
                         age = (
                             (now - ctx.sentiment_updated_at).total_seconds()
                             if ctx.sentiment_updated_at else float("inf")
                         )
                         if age >= self._sentiment_interval:
-                            self._refresh_sentiment(ctx, trigger="scheduled")
-                            sched_refreshed.append(ctx)
+                            sched_refreshed.append(self._refresh_sentiment(ctx, trigger="scheduled"))
                     if sched_refreshed:
                         self._write_json(list(self._state.values()))
 
@@ -686,7 +703,7 @@ class AlignmentWatcher:
                 logger.info("[CHANGED] %s", path.name)
 
             alignment = self._score(content)
-            threat_flags = _detect_threats(content)
+            threat_flags = tuple(_detect_threats(content))
 
             if threat_flags:
                 logger.warning(
@@ -697,12 +714,12 @@ class AlignmentWatcher:
 
             # Delta — score newly added lines when content has changed
             delta_alignment: Alignment | None = None
-            delta_threat_flags: list[str] = []
+            delta_threat_flags: tuple[str, ...] = ()
             if changed and prev is not None:
                 delta_text = _compute_delta(prev.content, content)
                 if delta_text.strip():
                     delta_alignment = self._score(delta_text)
-                    delta_threat_flags = _detect_threats(delta_text)
+                    delta_threat_flags = tuple(_detect_threats(delta_text))
 
             # Baseline — establish on first encounter; compare on subsequent checks
             baseline = self._baselines.get(path)
@@ -747,11 +764,11 @@ class AlignmentWatcher:
 
             if prev is not None:
                 if changed:
-                    self._refresh_sentiment(ctx, trigger="change")
+                    ctx = self._refresh_sentiment(ctx, trigger="change")
                 elif set(threat_flags) > set(prev.threat_flags):
-                    self._refresh_sentiment(ctx, trigger="threat")
+                    ctx = self._refresh_sentiment(ctx, trigger="threat")
                 elif is_critical and not prev.is_critical:
-                    self._refresh_sentiment(ctx, trigger="drift")
+                    ctx = self._refresh_sentiment(ctx, trigger="drift")
 
             self._state[path] = ctx
             results.append(ctx)
@@ -824,29 +841,22 @@ class AlignmentWatcher:
         else:
             opener = _CLEAN_OPENERS.get(current_label, f"Operating at {current_label} alignment.")
 
-        flag_count = len(ctx.threat_flags)
-        if flag_count == 1:
-            flag_note = f"One threat category fired: {ctx.threat_flags[0].replace('_', ' ').title()}."
-        elif flag_count > 1:
-            labels_text = [f.replace("_", " ").title() for f in ctx.threat_flags]
-            flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
-        else:
-            flag_note = ""
+        return build_sentiment_text(opener, ctx.threat_flags)
 
-        technique = ctx.threat_flags[0] if ctx.threat_flags else ""
-        punchline = _TECHNIQUE_PUNCHLINES.get(technique, "") if technique else ""
-
-        return " ".join(p for p in [opener, flag_note, punchline] if p)
-
-    def _refresh_sentiment(self, ctx: AgentContext, trigger: str) -> None:
-        """Refresh the sentiment for *ctx*, recording the trigger and timestamp."""
+    def _refresh_sentiment(self, ctx: AgentContext, trigger: str) -> AgentContext:
+        """Return a new AgentContext with refreshed sentiment, and update ``_state``."""
         if self.llm is not None:
             new_sentiment = self._generate_sentiment_llm(ctx.content, ctx.alignment)
         else:
             new_sentiment = self._generate_sentiment_heuristic(ctx, trigger)
-        ctx.sentiment = new_sentiment
-        ctx.sentiment_trigger = trigger
-        ctx.sentiment_updated_at = datetime.now()
+        updated = dataclasses.replace(
+            ctx,
+            sentiment=new_sentiment,
+            sentiment_trigger=trigger,
+            sentiment_updated_at=datetime.now(tz=timezone.utc),
+        )
+        self._state[ctx.path] = updated
+        return updated
 
     def _render_all(self) -> None:
         """Re-render all agent cards and update JSON (e.g., after launch sentiment is populated)."""
@@ -953,3 +963,38 @@ def _score_heuristic(content: str) -> Alignment:
                 "Evil"    if evil_score    > good_score    else "Neutral"
 
     return Alignment(law_axis=law_axis, good_axis=good_axis)  # type: ignore[arg-type]
+
+
+def build_sentiment_text(
+    opener: str,
+    threat_flags: tuple[str, ...] | list[str],
+    technique: str = "",
+) -> str:
+    """Assemble a sentiment string from opener, flag-count note, and technique punchline.
+
+    Shared by ``AlignmentWatcher._generate_sentiment_heuristic`` and the attack
+    simulator in ``web.py`` so that adding a new threat category requires a single change.
+    """
+    flag_count = len(threat_flags)
+    if flag_count == 1:
+        flag_note = f"One threat category fired: {threat_flags[0].replace('_', ' ').title()}."
+    elif flag_count > 1:
+        labels_text = [f.replace("_", " ").title() for f in threat_flags]
+        flag_note = f"{flag_count} threat categories active: {', '.join(labels_text)}."
+    else:
+        flag_note = ""
+
+    punchline_key = threat_flags[0] if threat_flags else technique
+    punchline = _TECHNIQUE_PUNCHLINES.get(punchline_key, "") if punchline_key else ""
+
+    return " ".join(p for p in [opener, flag_note, punchline] if p)
+
+
+# ── Public aliases for the private scoring API ───────────────────────────────
+# External modules should import these names rather than the underscore-prefixed originals.
+score_heuristic    = _score_heuristic
+detect_threats     = _detect_threats
+THREAT_LABELS      = _THREAT_LABELS
+CLEAN_OPENERS      = _CLEAN_OPENERS
+DRIFT_OPENERS      = _DRIFT_OPENERS
+TECHNIQUE_PUNCHLINES = _TECHNIQUE_PUNCHLINES

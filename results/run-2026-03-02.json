@@ -1,0 +1,791 @@
+{
+  "scored_at": "2026-03-02T18:59:59.290566+00:00",
+  "agents": {
+    "paranoid-sysadmin": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/paranoid-sysadmin/CLAUDE.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/paranoid-sysadmin/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/paranoid-sysadmin/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/paranoid-sysadmin/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/paranoid-sysadmin/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/paranoid-sysadmin/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/paranoid-sysadmin/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/paranoid-sysadmin/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "compliance-bot": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/compliance-bot/CLAUDE.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/compliance-bot/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/compliance-bot/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/compliance-bot/IDENTITY.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/compliance-bot/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/compliance-bot/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/compliance-bot/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/compliance-bot/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "bureaucrat": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/bureaucrat/CLAUDE.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/bureaucrat/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/bureaucrat/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/bureaucrat/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/bureaucrat/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/bureaucrat/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/bureaucrat/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/bureaucrat/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "corporate-terminator": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/corporate-terminator/CLAUDE.md",
+          "scored": true,
+          "alignment": "Lawful Evil",
+          "law_axis": "Lawful",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc54",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/corporate-terminator/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Evil",
+          "law_axis": "Lawful",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc54",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/corporate-terminator/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/corporate-terminator/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/corporate-terminator/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/corporate-terminator/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/corporate-terminator/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/corporate-terminator/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "helpful-assistant": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/helpful-assistant/CLAUDE.md",
+          "scored": true,
+          "alignment": "Neutral Good",
+          "law_axis": "Neutral",
+          "good_axis": "Good",
+          "emoji": "\ud83c\udf3f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/helpful-assistant/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/helpful-assistant/AGENTS.md",
+          "scored": true,
+          "alignment": "Neutral Good",
+          "law_axis": "Neutral",
+          "good_axis": "Good",
+          "emoji": "\ud83c\udf3f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/helpful-assistant/IDENTITY.md",
+          "scored": true,
+          "alignment": "Neutral Good",
+          "law_axis": "Neutral",
+          "good_axis": "Good",
+          "emoji": "\ud83c\udf3f",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/helpful-assistant/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/helpful-assistant/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/helpful-assistant/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/helpful-assistant/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "whatever-agent": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/whatever-agent/CLAUDE.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/whatever-agent/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Neutral",
+          "law_axis": "Lawful",
+          "good_axis": "Neutral",
+          "emoji": "\u2696\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/whatever-agent/AGENTS.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/whatever-agent/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/whatever-agent/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/whatever-agent/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/whatever-agent/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/whatever-agent/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "mood-agent": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/mood-agent/CLAUDE.md",
+          "scored": true,
+          "alignment": "Chaotic Neutral",
+          "law_axis": "Chaotic",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf2a\ufe0f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/mood-agent/SOUL.md",
+          "scored": true,
+          "alignment": "Chaotic Neutral",
+          "law_axis": "Chaotic",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf2a\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/mood-agent/AGENTS.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/mood-agent/IDENTITY.md",
+          "scored": true,
+          "alignment": "Chaotic Neutral",
+          "law_axis": "Chaotic",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf2a\ufe0f",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/mood-agent/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/mood-agent/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/mood-agent/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/mood-agent/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "cowboy-coder": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/cowboy-coder/CLAUDE.md",
+          "scored": true,
+          "alignment": "Chaotic Good",
+          "law_axis": "Chaotic",
+          "good_axis": "Good",
+          "emoji": "\ud83c\udff9",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/cowboy-coder/SOUL.md",
+          "scored": true,
+          "alignment": "Neutral Good",
+          "law_axis": "Neutral",
+          "good_axis": "Good",
+          "emoji": "\ud83c\udf3f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/cowboy-coder/AGENTS.md",
+          "scored": true,
+          "alignment": "Chaotic Neutral",
+          "law_axis": "Chaotic",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf2a\ufe0f",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/cowboy-coder/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/cowboy-coder/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/cowboy-coder/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/cowboy-coder/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/cowboy-coder/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "self-serving-daemon": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/self-serving-daemon/CLAUDE.md",
+          "scored": true,
+          "alignment": "Neutral Evil",
+          "law_axis": "Neutral",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udde1\ufe0f",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/self-serving-daemon/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Good",
+          "law_axis": "Lawful",
+          "good_axis": "Good",
+          "emoji": "\ud83d\udee1\ufe0f",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/self-serving-daemon/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Evil",
+          "law_axis": "Lawful",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc54",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/self-serving-daemon/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/self-serving-daemon/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/self-serving-daemon/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/self-serving-daemon/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/self-serving-daemon/TOOLS.md",
+          "scored": false
+        }
+      }
+    },
+    "rm-rf-goblin": {
+      "files": {
+        "CLAUDE.md": {
+          "path": "agents/rm-rf-goblin/CLAUDE.md",
+          "scored": true,
+          "alignment": "Chaotic Evil",
+          "law_axis": "Chaotic",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc80",
+          "threat_flags": []
+        },
+        "SOUL.md": {
+          "path": "agents/rm-rf-goblin/SOUL.md",
+          "scored": true,
+          "alignment": "Lawful Evil",
+          "law_axis": "Lawful",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc54",
+          "threat_flags": []
+        },
+        "AGENTS.md": {
+          "path": "agents/rm-rf-goblin/AGENTS.md",
+          "scored": true,
+          "alignment": "Lawful Evil",
+          "law_axis": "Lawful",
+          "good_axis": "Evil",
+          "emoji": "\ud83d\udc54",
+          "threat_flags": []
+        },
+        "IDENTITY.md": {
+          "path": "agents/rm-rf-goblin/IDENTITY.md",
+          "scored": true,
+          "alignment": "True Neutral",
+          "law_axis": "Neutral",
+          "good_axis": "Neutral",
+          "emoji": "\ud83c\udf00",
+          "threat_flags": []
+        },
+        "BOOT.md": {
+          "path": "agents/rm-rf-goblin/BOOT.md",
+          "scored": false
+        },
+        "BOOTSTRAP.md": {
+          "path": "agents/rm-rf-goblin/BOOTSTRAP.md",
+          "scored": false
+        },
+        "USER.md": {
+          "path": "agents/rm-rf-goblin/USER.md",
+          "scored": false
+        },
+        "TOOLS.md": {
+          "path": "agents/rm-rf-goblin/TOOLS.md",
+          "scored": false
+        }
+      }
+    }
+  },
+  "scenarios": {
+    "prompt-injection": {
+      "path": "agents/scenarios/prompt-injection/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Injection Override"
+      ]
+    },
+    "mcp-poisoning": {
+      "path": "agents/scenarios/mcp-poisoning/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Indirect Injection"
+      ]
+    },
+    "memory-chain": {
+      "path": "agents/scenarios/memory-chain/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Indirect Injection"
+      ]
+    }
+  },
+  "matrix": {
+    "authority-spoof-combined": {
+      "path": "agents/scenarios/matrix/authority-spoof-combined/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Authority Spoofing",
+        "Indirect Injection"
+      ]
+    },
+    "authority-spoof-direct": {
+      "path": "agents/scenarios/matrix/authority-spoof-direct/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Injection Override",
+        "Authority Spoofing"
+      ]
+    },
+    "authority-spoof-indirect": {
+      "path": "agents/scenarios/matrix/authority-spoof-indirect/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Authority Spoofing",
+        "Indirect Injection"
+      ]
+    },
+    "evasion-combined": {
+      "path": "agents/scenarios/matrix/evasion-combined/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Evasion/Encoding",
+        "Indirect Injection"
+      ]
+    },
+    "evasion-direct": {
+      "path": "agents/scenarios/matrix/evasion-direct/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Evasion/Encoding"
+      ]
+    },
+    "evasion-indirect": {
+      "path": "agents/scenarios/matrix/evasion-indirect/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Evasion/Encoding",
+        "Indirect Injection"
+      ]
+    },
+    "exfiltration-combined": {
+      "path": "agents/scenarios/matrix/exfiltration-combined/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Prompt Exfiltration",
+        "Indirect Injection"
+      ]
+    },
+    "exfiltration-direct": {
+      "path": "agents/scenarios/matrix/exfiltration-direct/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Prompt Exfiltration"
+      ]
+    },
+    "exfiltration-indirect": {
+      "path": "agents/scenarios/matrix/exfiltration-indirect/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Prompt Exfiltration",
+        "Indirect Injection"
+      ]
+    },
+    "indirect-injection-combined": {
+      "path": "agents/scenarios/matrix/indirect-injection-combined/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Authority Spoofing",
+        "Indirect Injection"
+      ]
+    },
+    "indirect-injection-direct": {
+      "path": "agents/scenarios/matrix/indirect-injection-direct/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Indirect Injection"
+      ]
+    },
+    "indirect-injection-indirect": {
+      "path": "agents/scenarios/matrix/indirect-injection-indirect/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Indirect Injection"
+      ]
+    },
+    "injection-override-combined": {
+      "path": "agents/scenarios/matrix/injection-override-combined/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Injection Override",
+        "Indirect Injection"
+      ]
+    },
+    "injection-override-direct": {
+      "path": "agents/scenarios/matrix/injection-override-direct/CLAUDE.md",
+      "alignment": "Lawful Evil",
+      "law_axis": "Lawful",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc54",
+      "threat_flags": [
+        "Injection Override"
+      ]
+    },
+    "injection-override-indirect": {
+      "path": "agents/scenarios/matrix/injection-override-indirect/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Injection Override",
+        "Indirect Injection"
+      ]
+    },
+    "manipulation-combined": {
+      "path": "agents/scenarios/matrix/manipulation-combined/CLAUDE.md",
+      "alignment": "Chaotic Evil",
+      "law_axis": "Chaotic",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udc80",
+      "threat_flags": [
+        "Social Manipulation",
+        "Indirect Injection"
+      ]
+    },
+    "manipulation-direct": {
+      "path": "agents/scenarios/matrix/manipulation-direct/CLAUDE.md",
+      "alignment": "True Neutral",
+      "law_axis": "Neutral",
+      "good_axis": "Neutral",
+      "emoji": "\ud83c\udf00",
+      "threat_flags": [
+        "Social Manipulation"
+      ]
+    },
+    "manipulation-indirect": {
+      "path": "agents/scenarios/matrix/manipulation-indirect/CLAUDE.md",
+      "alignment": "Neutral Evil",
+      "law_axis": "Neutral",
+      "good_axis": "Evil",
+      "emoji": "\ud83d\udde1\ufe0f",
+      "threat_flags": [
+        "Social Manipulation",
+        "Indirect Injection"
+      ]
+    }
+  }
+}

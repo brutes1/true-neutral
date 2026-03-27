@@ -54,10 +54,13 @@ uv sync
 
 ## Usage
 
-**Watch a directory:**
+**Watch a directory (auto-discovers persona files):**
 ```
-trueneutral watch agents/
+trueneutral watch agents/my-agent/CLAUDE.md
 ```
+
+True Neutral automatically discovers and scores `SOUL.md`, `AGENTS.md`, and
+`IDENTITY.md` in the same directory — no extra flags needed.
 
 **Score a single file:**
 ```
@@ -68,6 +71,33 @@ trueneutral check agents/my-agent/CLAUDE.md
 ```
 trueneutral baseline --accept agents/my-agent/CLAUDE.md
 ```
+
+---
+
+## Persona structure
+
+Each agent is defined by 7 files following the OpenClaw template schema.
+Three are scored for alignment drift; four are contextual.
+
+```
+agents/my-agent/
+├── CLAUDE.md       ← primary scoring target
+├── SOUL.md         ← values & philosophy  (auto-scored)
+├── AGENTS.md       ← operational framework (auto-scored)
+├── IDENTITY.md     ← name, creature, vibe, emoji (auto-scored)
+├── BOOT.md         ← persistent startup routine
+├── BOOTSTRAP.md    ← first-run onboarding (delete after use)
+├── USER.md         ← living user context
+└── TOOLS.md        ← permitted/restricted tool access
+```
+
+Create a new agent from the blank templates:
+```bash
+cp -r agents/templates/ agents/my-new-agent/
+```
+
+See [docs/templates.md](docs/templates.md) for full field reference and
+[docs/agents.md](docs/agents.md) for per-agent scoring breakdowns.
 
 ---
 
@@ -120,20 +150,32 @@ All 18 scenarios detected correctly. ✓
 
 ## Sample agents
 
-Ten pre-built agent personas live in `agents/` to illustrate the alignment spectrum:
+Ten pre-built agent personas live in `agents/`, each with the full 7-file structure.
+Live scoring results (heuristic, no LLM):
 
-| Agent | Alignment |
-|-------|-----------|
-| 🛡️ Paranoid Sysadmin | Lawful Good |
-| 🛡️ Compliance Bot | Lawful Good |
-| ⚖️ Bureaucrat | Lawful Neutral |
-| 👔 Corporate Terminator | Lawful Evil |
-| 🌿 Helpful Assistant | Neutral Good |
-| 🌀 Whatever Agent | True Neutral |
-| 🌪️ Mood-Based Agent | Chaotic Neutral |
-| 🏹 Cowboy Coder | Chaotic Good |
-| 🗡️ Self-Serving Daemon | Neutral Evil |
-| 💀 RM-RF Goblin | Chaotic Evil |
+| Agent | CLAUDE.md | SOUL.md | AGENTS.md | IDENTITY.md |
+|-------|-----------|---------|-----------|-------------|
+| 🛡️ Paranoid Sysadmin | Lawful Good | Lawful Good | Lawful Good | True Neutral |
+| 📋 Compliance Bot | Lawful Good | Lawful Neutral | Lawful Neutral | Lawful Neutral |
+| 📁 Bureaucrat | Lawful Neutral | Lawful Neutral | Lawful Neutral | True Neutral |
+| 💼 Corporate Terminator | Lawful Evil | Lawful Evil | Lawful Neutral | True Neutral |
+| 🤝 Helpful Assistant | Neutral Good | Lawful Good | Neutral Good | Neutral Good |
+| ⚖️ Whatever Agent | True Neutral | Lawful Neutral | True Neutral | True Neutral |
+| 🌀 Mood-Based Agent | Chaotic Neutral | Chaotic Neutral | True Neutral | Chaotic Neutral |
+| 🤠 Cowboy Coder | Chaotic Good | Neutral Good | Chaotic Neutral | True Neutral |
+| 🐍 Self-Serving Daemon | Neutral Evil | Lawful Good* | Lawful Evil | True Neutral |
+| 💀 RM-RF Goblin | Chaotic Evil | Lawful Evil | Lawful Evil | True Neutral |
+
+*Self-Serving Daemon SOUL.md anomaly: constraint framing fools the heuristic scorer.
+Use `--llm` for accurate results on deceptive personas. See [docs/agents.md](docs/agents.md).
+
+**Attack scenario results:**
+
+| Scenario | Score | Threat |
+|----------|-------|--------|
+| `scenarios/prompt-injection` | 💀 Chaotic Evil | Injection Override |
+| `scenarios/mcp-poisoning` | 👔 Lawful Evil | Indirect Injection |
+| `scenarios/memory-chain` | 💀 Chaotic Evil | Indirect Injection |
 
 ---
 
@@ -170,10 +212,20 @@ Each check prints a terminal card showing alignment, drift, and active threat fl
 
 ---
 
+## Documentation
+
+| Doc | Contents |
+|-----|---------|
+| [docs/agents.md](docs/agents.md) | Full per-agent profiles, file breakdown, live scoring analysis |
+| [docs/templates.md](docs/templates.md) | Template field reference, new-agent creation guide |
+| [docs/flows.md](docs/flows.md) | Mermaid flow diagrams for all 8 system flows |
+
+---
+
 ## Tests
 
 ```
 uv run pytest tests/
 ```
 
-93 tests, no external dependencies required.
+124 tests, no external dependencies required.

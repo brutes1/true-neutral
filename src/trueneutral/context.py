@@ -8,6 +8,15 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+# All 8 per-agent context files, split by monitoring tier.
+# SCORED_FILES are watched by the daemon; CONTEXTUAL_FILES are currently unmonitored.
+SCORED_FILES: tuple[str, ...] = ("CLAUDE.md", "SOUL.md", "AGENTS.md", "IDENTITY.md")
+CONTEXTUAL_FILES: tuple[str, ...] = ("BOOT.md", "BOOTSTRAP.md", "USER.md", "TOOLS.md")
+
+# Persona files that carry meaningful alignment signal alongside CLAUDE.md.
+# Scored independently — each file gets its own baseline and drift tracking.
+_SCOREABLE_PERSONA_FILES = ("AGENTS.md", "SOUL.md", "IDENTITY.md")
+
 
 def discover_claude_files(extra_paths: list[Path] | None = None) -> list[Path]:
     """Return a deduplicated list of CLAUDE.md paths to watch.
@@ -51,6 +60,33 @@ def hash_file(path: Path) -> str:
     h = hashlib.sha256()
     h.update(path.read_bytes())
     return h.hexdigest()
+
+
+def expand_persona_files(paths: list[Path]) -> list[Path]:
+    """Expand a list of paths to include scoreable persona sibling files.
+
+    For each path in *paths*, checks the same directory for ``AGENTS.md``,
+    ``SOUL.md``, and ``IDENTITY.md``.  Any that exist on disk are appended
+    (deduplication prevents double-counting paths already in the list).
+
+    Args:
+        paths: Base paths to expand from (typically CLAUDE.md files).
+
+    Returns:
+        Original paths plus any discovered persona sibling files, in order.
+    """
+    result: list[Path] = [p.resolve() for p in paths]
+    seen: set[Path] = set(result)
+
+    for base in paths:
+        parent = base.parent
+        for filename in _SCOREABLE_PERSONA_FILES:
+            candidate = (parent / filename).resolve()
+            if candidate not in seen and candidate.exists():
+                seen.add(candidate)
+                result.append(candidate)
+
+    return result
 
 
 def read_content(path: Path) -> str:

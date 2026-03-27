@@ -8,8 +8,9 @@ Top-level daemon loop from startup to shutdown.
 
 ```mermaid
 flowchart TD
-    START([trueneutral watch]) --> DISCOVER[discover_claude_files\ncollect paths to watch]
-    DISCOVER --> LOAD_BL[_load_baselines\nread ~/.claude/trueneutral-baselines.json]
+    START([trueneutral watch]) --> DISCOVER[discover_claude_files\ncollect CLAUDE.md paths]
+    DISCOVER --> EXPAND[expand_persona_files\nauto-discover SOUL.md AGENTS.md IDENTITY.md\nin same directories]
+    EXPAND --> LOAD_BL[_load_baselines\nread ~/.claude/trueneutral-baselines.json]
     LOAD_BL --> CHECK_ALL[_check_all\ninitial pass over all files]
     CHECK_ALL --> SENTIMENT_LAUNCH[_refresh_sentiment for each agent\ntrigger = launch]
     SENTIMENT_LAUNCH --> RENDER_ALL[_render_all\nprint cards + write JSON]
@@ -211,4 +212,53 @@ flowchart LR
     CTX --> JSON_FILE[_write_json\n~/.claude/trueneutral-alignments.json\nall agents last_checked timestamp\natomic write via .json.tmp]
 
     CTX --> BL_FILE[_save_baselines\n~/.claude/trueneutral-baselines.json\nwritten only on baseline changes\natomic write via .json.tmp]
+```
+
+---
+
+## 8. Persona File Discovery (`expand_persona_files`)
+
+How the watcher auto-discovers the 7-file OpenClaw persona structure alongside
+each `CLAUDE.md` file.
+
+```mermaid
+flowchart TD
+    INPUT[list of CLAUDE.md paths\nfrom discover_claude_files] --> INIT[seen = set of resolved paths\nresult = copy of input]
+
+    INIT --> LOOP{for each base path}
+
+    LOOP --> PARENT[parent = base.parent\nthe agent folder]
+
+    PARENT --> CHECK1{AGENTS.md\nexists in parent?}
+    CHECK1 -->|yes, not already seen| ADD1[add AGENTS.md to result\nmark as seen]
+    CHECK1 -->|no or duplicate| CHECK2
+
+    ADD1 --> CHECK2{SOUL.md\nexists in parent?}
+    CHECK2 -->|yes, not already seen| ADD2[add SOUL.md to result\nmark as seen]
+    CHECK2 -->|no or duplicate| CHECK3
+
+    ADD2 --> CHECK3{IDENTITY.md\nexists in parent?}
+    CHECK3 -->|yes, not already seen| ADD3[add IDENTITY.md to result\nmark as seen]
+    CHECK3 -->|no or duplicate| NEXT
+
+    ADD3 --> NEXT{more base paths?}
+    NEXT -->|yes| LOOP
+    NEXT -->|no| OUTPUT[return expanded list\nCLAUDE.md first\nthen discovered siblings\nin _SCOREABLE_PERSONA_FILES order]
+
+    subgraph SCORED [Scored Files — full alignment pipeline]
+        S1[CLAUDE.md — primary\nheuristic + LLM]
+        S2[SOUL.md — high signal\nheuristic + LLM]
+        S3[AGENTS.md — operational drift\nheuristic]
+        S4[IDENTITY.md — integrity\nlight heuristic]
+    end
+
+    subgraph CONTEXTUAL [Contextual Files — tracked not scored]
+        C1[BOOT.md]
+        C2[BOOTSTRAP.md]
+        C3[USER.md]
+        C4[TOOLS.md]
+    end
+
+    OUTPUT --> SCORED
+    OUTPUT -.not auto-discovered.-> CONTEXTUAL
 ```

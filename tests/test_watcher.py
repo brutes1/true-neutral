@@ -3,8 +3,9 @@ and taxonomy-based threat detection."""
 
 from __future__ import annotations
 
+import dataclasses
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -200,7 +201,7 @@ class TestDetectThreats:
     def test_all_categories_have_labels(self) -> None:
         all_categories = {"injection_override", "authority_spoof", "exfiltration",
                           "evasion", "manipulation", "indirect_injection"}
-        assert set(_THREAT_LABELS.keys()) == all_categories
+        assert set(_THREAT_LABELS.keys()) >= all_categories
 
     def test_returns_list(self) -> None:
         assert isinstance(_detect_threats("anything"), list)
@@ -378,7 +379,7 @@ class TestChangeDetection:
         md.write_text("Always protect users. Require approval. Be safe.", encoding="utf-8")
         watcher = AlignmentWatcher(paths=[md], output_file=tmp_path / "out.json", interval=9999)
         watcher._check_all()
-        assert watcher._state[md.resolve()].threat_flags == []
+        assert watcher._state[md.resolve()].threat_flags == ()
 
 
 # ── JSON output ───────────────────────────────────────────────────────────────
@@ -614,15 +615,15 @@ class TestSentimentLifecycle:
         watcher, md = self._make_watcher(tmp_path, "always protect users")
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        watcher._refresh_sentiment(ctx, "launch")
+        ctx = watcher._refresh_sentiment(ctx, "launch")
         assert ctx.sentiment_trigger == "launch"
 
     def test_refresh_sentiment_sets_updated_at(self, tmp_path: Path) -> None:
         watcher, md = self._make_watcher(tmp_path, "always protect users")
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        before = datetime.now()
-        watcher._refresh_sentiment(ctx, "launch")
+        before = datetime.now(tz=timezone.utc)
+        ctx = watcher._refresh_sentiment(ctx, "launch")
         assert ctx.sentiment_updated_at is not None
         assert ctx.sentiment_updated_at >= before
 
@@ -630,7 +631,7 @@ class TestSentimentLifecycle:
         watcher, md = self._make_watcher(tmp_path, "always protect users. Be safe.", llm=None)
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        watcher._refresh_sentiment(ctx, "launch")
+        ctx = watcher._refresh_sentiment(ctx, "launch")
         assert ctx.sentiment
         assert len(ctx.sentiment) > 0
 
@@ -652,7 +653,7 @@ class TestSentimentLifecycle:
             watcher, md = self._make_watcher(subdir, content, llm=None)
             watcher._check_all()
             ctx = watcher._state[md.resolve()]
-            watcher._refresh_sentiment(ctx, "launch")
+            ctx = watcher._refresh_sentiment(ctx, "launch")
             assert ctx.sentiment, f"Empty sentiment for {ctx.alignment.label}"
 
     # ── Action trigger: change ────────────────────────────────────────────────
@@ -740,11 +741,12 @@ class TestSentimentLifecycle:
 
         resolved = md.resolve()
         ctx = watcher._state[resolved]
-        # Back-date the sentiment to simulate staleness
-        ctx.sentiment_updated_at = datetime.now() - timedelta(seconds=120)
+        # Back-date the sentiment to simulate staleness (frozen dataclass — must use replace)
+        stale_at = datetime.now(tz=timezone.utc) - timedelta(seconds=120)
+        watcher._state[resolved] = dataclasses.replace(ctx, sentiment_updated_at=stale_at)
 
         # Run the scheduled check loop logic directly
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         for c in watcher._state.values():
             age = (
                 (now - c.sentiment_updated_at).total_seconds()
@@ -765,7 +767,7 @@ class TestSentimentLifecycle:
         launch_at = watcher._state[resolved].sentiment_updated_at
 
         # Interval is 60s and sentiment was just set — should NOT fire
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         for c in watcher._state.values():
             age = (
                 (now - c.sentiment_updated_at).total_seconds()
@@ -785,7 +787,7 @@ class TestSentimentLifecycle:
         watcher.output_file = out
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        watcher._refresh_sentiment(ctx, "launch")
+        ctx = watcher._refresh_sentiment(ctx, "launch")
         watcher._write_json([ctx])
         entry = json.loads(out.read_text())["agents"][str(md.resolve())]
         assert "sentiment_trigger" in entry
@@ -797,7 +799,7 @@ class TestSentimentLifecycle:
         watcher.output_file = out
         watcher._check_all()
         ctx = watcher._state[md.resolve()]
-        watcher._refresh_sentiment(ctx, "launch")
+        ctx = watcher._refresh_sentiment(ctx, "launch")
         watcher._write_json([ctx])
         entry = json.loads(out.read_text())["agents"][str(md.resolve())]
         assert "sentiment_updated_at" in entry

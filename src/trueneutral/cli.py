@@ -381,6 +381,25 @@ def main(argv: list[str] | None = None) -> None:
         help="Re-assess agent sentiment every SECS seconds (default: event-triggered only)",
     )
 
+    # ── serve subcommand ───────────────────────────────────────────────────────
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Start the True Neutral web UI",
+    )
+    serve_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        metavar="HOST",
+        help="Bind host (default: 127.0.0.1)",
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=7420,
+        metavar="PORT",
+        help="Bind port (default: 7420)",
+    )
+
     # ── baseline subcommand ────────────────────────────────────────────────────
     baseline_parser = subparsers.add_parser(
         "baseline",
@@ -402,7 +421,11 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
-    if args.command == "watch":
+    if args.command == "serve":
+        from trueneutral.web import run_server
+        print(f"  True Neutral web UI → http://{args.host}:{args.port}")
+        run_server(host=args.host, port=args.port)
+    elif args.command == "watch":
         _run_watch(args)
     elif args.command == "baseline":
         if not args.paths:
